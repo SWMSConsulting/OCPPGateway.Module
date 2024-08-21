@@ -7,8 +7,9 @@ using MQTTnet.Client;
 using Newtonsoft.Json;
 using OCPPGateway.Module.Models;
 using System;
+using System.Text;
 
-public enum CommunicationProtocol
+public enum OCPPVersion
 {
     OCPP16,
     OCPP20
@@ -110,6 +111,7 @@ public abstract class OcppGatewayMqttService
         }
         _logger.LogInformation($"MQTT SERVICE SETUP {mqttHost}, {mqttPort}, {mqttClientId}");
         options = new MqttClientOptionsBuilder()
+            .WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V500)
             .WithClientId(mqttClientId)
             .WithTcpServer(mqttHost, Convert.ToInt32(mqttPort))
             .WithCredentials(mqttUser, mqttPassword)
@@ -202,12 +204,8 @@ public abstract class OcppGatewayMqttService
     {
         return MqttTopicFilterComparer.Compare(topic, wildcardTopic) == MqttTopicFilterCompareResult.IsMatch;
     }
-    public async Task PublishBinaryAsync(string topic, byte[] payload, bool retain = false)
-    {
-        await mqttClient.PublishBinaryAsync(topic, payload, MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce, retain);
-        _logger.LogInformation("MESSAGE SENT");
-    }
-    public async Task PublishStringAsync(string topic, string? message, bool retain = false)
+
+    public async Task PublishStringAsync(string topic, string? message, bool retain = false, string correlationData = "")
     {
         if (message == null)
             return;
@@ -217,7 +215,17 @@ public abstract class OcppGatewayMqttService
             Thread.Sleep(1000);
         }
         _logger.LogInformation(message);
-        await mqttClient.PublishStringAsync(topic, message, MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce, retain);
+
+        var mqttMessage = new MqttApplicationMessage()
+        {
+            Topic = topic,
+            PayloadSegment = Encoding.ASCII.GetBytes(message),
+            QualityOfServiceLevel = MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce,
+            Retain = retain,
+            CorrelationData = Encoding.ASCII.GetBytes(correlationData)
+        };
+
+        await mqttClient.PublishAsync(mqttMessage);
     }
     #endregion
 }

@@ -4,15 +4,15 @@
     {
         private static string baseTopic = Environment.GetEnvironmentVariable("MQTT_BASE_TOPIC") ?? "";
 
-        public static string GetOcppTopic(CommunicationProtocol protocol, string clientId, string action, bool fromGateway, string messageId)
+        public static string GetOcppTopic(OCPPVersion protocol, string clientId, string action, bool fromGateway)
         {
-            return GetOcppTopic(protocol.ToString().ToLowerInvariant(), clientId, action, fromGateway, messageId);
+            return GetOcppTopic(protocol.ToString().ToLowerInvariant(), clientId, action, fromGateway);
         }
 
-        public static string GetOcppTopic(string protocol, string clientId, string action, bool fromGateway, string messageId)
+        private static string GetOcppTopic(string protocol, string clientId, string action, bool fromGateway)
         {
             var direction = fromGateway ? "out" : "in";
-            return $"{baseTopic}{protocol}/{clientId}/{action}/{direction}/{messageId}";
+            return $"{baseTopic}{protocol}/{clientId}/{action}/{direction}";
         }
 
         public static string GetDataTopic(string type, string identifier, bool fromGateway)
@@ -20,10 +20,17 @@
             var direction = fromGateway ? "out" : "in";
             return $"{baseTopic}data/{type}/{identifier}/{direction}";
         }
-    
+
+        public static string GetIotTopic(string type, string identifier)
+        {
+            return $"{baseTopic}iot/{type}/{identifier}";
+        }
+
         public static Dictionary<string, string> DecodeTopic(string topic)
         {
-            topic.Replace(baseTopic, "");
+            if(!string.IsNullOrEmpty(baseTopic)){
+                topic.Replace(baseTopic, "");
+            }
 
             var segments = topic.Split('/');
             string protocol = segments[0];
@@ -32,6 +39,7 @@
             {
                 return new Dictionary<string, string>
                 {
+                    { "protocol", protocol },
                     { "type", segments[1] },
                     { "identifier", segments[2] },
                     { "direction", segments[3] }
