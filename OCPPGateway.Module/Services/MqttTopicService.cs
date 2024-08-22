@@ -21,9 +21,9 @@
             return $"{baseTopic}data/{type}/{identifier}/{direction}";
         }
 
-        public static string GetIotTopic(string type, string identifier)
+        public static string GetIotTopic(string measurement)
         {
-            return $"{baseTopic}iot/{type}/{identifier}";
+            return $"{baseTopic}iot/{measurement}";
         }
 
         public static Dictionary<string, string> DecodeTopic(string topic)
