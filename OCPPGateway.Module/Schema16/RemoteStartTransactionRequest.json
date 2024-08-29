@@ -1,12 +1,16 @@
 ﻿{
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "SetChargingProfileRequest",
+  "title": "RemoteStartTransactionRequest",
   "type": "object",
   "properties": {
     "connectorId": {
       "type": "integer"
     },
-    "csChargingProfiles": {
+    "idTag": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "chargingProfile": {
       "type": "object",
       "properties": {
         "chargingProfileId": {
@@ -110,7 +114,6 @@
   },
   "additionalProperties": false,
   "required": [
-    "connectorId",
-    "csChargingProfiles"
+    "idTag"
   ]
 }

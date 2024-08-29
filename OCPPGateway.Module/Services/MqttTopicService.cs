@@ -52,8 +52,7 @@
                     { "protocol", protocol },
                     { "clientId", segments[1] },
                     { "action", segments[2] },
-                    { "direction", segments[3] },
-                    { "messageId", segments[4] }
+                    { "direction", segments[3] }
                 };
             }
         }
