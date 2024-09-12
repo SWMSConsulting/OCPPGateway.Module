@@ -1,4 +1,6 @@
-﻿namespace OCPPGateway.Module.Models;
+﻿using Newtonsoft.Json.Linq;
+
+namespace OCPPGateway.Module.Services;
 
 public class LineProtocolMessageBuilder
 {
@@ -8,6 +10,7 @@ public class LineProtocolMessageBuilder
 
     private Dictionary<string, string> Fields = new Dictionary<string, string>();
 
+    private long? Timestamp = null; // nanoseconds
     public LineProtocolMessageBuilder AddMeasurement(string measurement)
     {
         Measurement = measurement;
@@ -31,7 +34,7 @@ public class LineProtocolMessageBuilder
     public LineProtocolMessageBuilder AddField(string key, double? value)
     {
         if (value.HasValue)
-            Fields.Add(key, value.Value.ToString().Replace(",","."));
+            Fields.Add(key, value.Value.ToString().Replace(",", "."));
         return this;
     }
 
@@ -42,6 +45,17 @@ public class LineProtocolMessageBuilder
         return this;
     }
 
+    public LineProtocolMessageBuilder AddTimestamp(DateTime? timestamp)
+    {
+        return AddTimestamp(timestamp.HasValue ? new DateTimeOffset(timestamp.Value) : null);
+    }
+
+    public LineProtocolMessageBuilder AddTimestamp(DateTimeOffset? timestamp)
+    {
+        if (timestamp.HasValue)
+            Timestamp = timestamp?.ToUniversalTime().Subtract(new DateTime(1970, 1, 1)).Ticks * 100;
+        return this;
+    }
     public string Build()
     {
         if (string.IsNullOrEmpty(Measurement))
@@ -55,6 +69,8 @@ public class LineProtocolMessageBuilder
 
         var tags = string.Join(",", Tags.Select(t => $"{t.Key}={t.Value}"));
         var fields = string.Join(",", Fields.Select(f => $"{f.Key}={f.Value}"));
+        string timestamp = Timestamp.HasValue ? $" {Timestamp.Value}" : "";
+
         return $"{Measurement},{tags} {fields}";
     }
 }
