@@ -13,5 +13,6 @@ public static class OCPPDbContextExtention
         // abstract classes
         modelBuilder.Entity<OCPPChargePoint>();
         modelBuilder.Entity<OCPPChargeTag>();
+        modelBuilder.Entity<OCPPChargePointConnector>();
     }
 }

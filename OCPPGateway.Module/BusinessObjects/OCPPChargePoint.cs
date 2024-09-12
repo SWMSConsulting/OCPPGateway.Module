@@ -4,6 +4,7 @@ using DevExpress.Persistent.Validation;
 using MQTTnet.Internal;
 using OCPPGateway.Module.Models;
 using OCPPGateway.Module.Services;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 
 namespace OCPPGateway.Module.BusinessObjects;
@@ -25,6 +26,7 @@ public abstract class OCPPChargePoint : BaseObject
     [RuleRequiredField]
     public virtual string Name { get; set; }
 
+    public virtual IList<OCPPChargePointConnector> Connectors { get; set; } = new ObservableCollection<OCPPChargePointConnector>();
 
     #region OCPP related
 
