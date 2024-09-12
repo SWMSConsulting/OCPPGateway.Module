@@ -1,8 +1,8 @@
 ﻿namespace OCPPGateway.Module.Models;
 
-public class UnknownChargeTag
+public class UnknownChargePoint
 {
-    public string TagId { get; set; }
+    public string ChargePointId { get; set; }
     public DateTime? Timestamp { get; set; }
     public string Action { get; set; }
 }
