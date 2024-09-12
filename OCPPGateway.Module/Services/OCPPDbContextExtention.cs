@@ -10,6 +10,8 @@ public static class OCPPDbContextExtention
         modelBuilder.Entity<UnknownOCPPChargePoint>();
         modelBuilder.Entity<UnknownOCPPChargeTag>();
 
+        // abstract classes
         modelBuilder.Entity<OCPPChargePoint>();
+        modelBuilder.Entity<OCPPChargeTag>();
     }
 }

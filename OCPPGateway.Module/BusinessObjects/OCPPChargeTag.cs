@@ -9,8 +9,8 @@ using System.ComponentModel;
 namespace OCPPGateway.Module.BusinessObjects;
 
 [NavigationItem("Master Data")]
-[DisplayName("Charge Point")]
-public abstract class OCPPChargePoint : BaseObject
+[DisplayName("Charge Tag")]
+public abstract class OCPPChargeTag : BaseObject
 {
     public override void OnSaving()
     {
@@ -25,6 +25,10 @@ public abstract class OCPPChargePoint : BaseObject
     [RuleRequiredField]
     public virtual string Name { get; set; }
 
+    public DateTime? ExpiryDate { get; set; }
+
+    public bool Blocked { get; set; }
+
 
     #region OCPP related
 
@@ -33,7 +37,7 @@ public abstract class OCPPChargePoint : BaseObject
     {
         get
         {
-            var type = typeof(OCPPChargePoint);
+            var type = typeof(OCPPChargeTag);
             return AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(s => s.GetTypes())
                 .Where(t => t != type && type.IsAssignableFrom(t))
@@ -42,14 +46,17 @@ public abstract class OCPPChargePoint : BaseObject
     }
 
     [Browsable(false)]
-    public ChargePoint ChargePoint
+    public ChargeTag ChargeTag
     {
         get
         {
-            return new ChargePoint
+            return new ChargeTag
             {
-                ChargePointId = Identifier,
-                Name = Name,
+                TagId = Identifier,
+                TagName = Name,
+                ExpiryDate = ExpiryDate,
+                Blocked = Blocked,
+                ParentTagId = null,
             };
         }
     }
@@ -57,7 +64,7 @@ public abstract class OCPPChargePoint : BaseObject
     public void Publish()
     {
         var service = ObjectSpace.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
-        service?.Publish(ChargePoint).RunInBackground();
+        service?.Publish(ChargeTag).RunInBackground();
     }
     #endregion
 }
