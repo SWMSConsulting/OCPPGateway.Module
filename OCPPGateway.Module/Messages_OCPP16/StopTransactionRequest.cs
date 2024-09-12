@@ -323,8 +323,8 @@ public enum SampledValueUnit
     [System.Runtime.Serialization.EnumMember(Value = @"K")]
     K = 12,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"Celcius")]
-    Celcius = 13,
+    [System.Runtime.Serialization.EnumMember(Value = @"Celsius")]
+    Celsius = 13,
 
     [System.Runtime.Serialization.EnumMember(Value = @"Fahrenheit")]
     Fahrenheit = 14,

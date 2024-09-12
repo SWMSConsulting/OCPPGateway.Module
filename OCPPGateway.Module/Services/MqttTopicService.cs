@@ -29,7 +29,7 @@
         public static Dictionary<string, string> DecodeTopic(string topic)
         {
             if(!string.IsNullOrEmpty(baseTopic)){
-                topic.Replace(baseTopic, "");
+                topic = topic.Replace(baseTopic, "");
             }
 
             var segments = topic.Split('/');
