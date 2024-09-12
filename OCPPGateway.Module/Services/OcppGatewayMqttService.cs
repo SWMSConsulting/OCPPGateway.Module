@@ -36,55 +36,8 @@ public abstract class OcppGatewayMqttService
     public abstract IEnumerable<ChargePoint> GetChargePoints(string? identifier = null);
     public abstract IEnumerable<ChargeTag> GetChargeTags(string? identifier = null);
 
-    public async void OnDataReceived(DataReceivedEventArgs args)
-    {
-        Console.WriteLine($"Payload: {args.Payload}");
 
-        string? identifier = args.Identifier == "all" ? null : args.Identifier;
-
-        switch (args.Type)
-        {
-            case nameof(ChargePoint):
-                var cps = GetChargePoints(identifier);
-                if (cps.Count() < 1)
-                {
-                    Console.WriteLine($"Charge Point {args.Identifier} not found");
-                    return;
-                }
-                foreach (var cp in cps)
-                {
-                    await Publish(cp);
-                }
-                break;
-
-            case nameof(ChargeTag):
-                var cts = GetChargeTags(identifier);
-                if(cts.Count() < 1)
-                {
-                    Console.WriteLine($"Charge Point {args.Identifier} not found");
-                    return;
-                }
-                foreach (var cp in cts)
-                {
-                    await Publish(cp);
-                }
-                break;
-        }
-    }
-
-    public async void SendInitialData()
-    {
-
-        foreach (var cp in GetChargePoints())
-        {
-            await Publish(cp);
-        }
-        foreach (var ct in GetChargeTags())
-        {
-            await Publish(ct);
-        }
-    }
-
+    #region setup
     public OcppGatewayMqttService(
         ILogger<OcppGatewayMqttService> logger,
         IServiceScopeFactory serviceScopeFactory
@@ -122,6 +75,33 @@ public abstract class OcppGatewayMqttService
         OnConfiguring();
     }
 
+
+    public async void SendInitialData()
+    {
+
+        foreach (var cp in GetChargePoints())
+        {
+            await Publish(cp);
+        }
+        foreach (var ct in GetChargeTags())
+        {
+            await Publish(ct);
+        }
+    }
+    #endregion
+
+    #region OnDataReceived
+    public async void OnDataReceived(DataReceivedEventArgs args)
+    {
+        Console.WriteLine($"Payload: {args.Payload}");
+
+
+
+    }
+    #endregion
+
+    #region publish
+
     public async Task Publish(ChargePoint chargePoint)
     {
         var payload = JsonConvert.SerializeObject(chargePoint);
@@ -134,6 +114,7 @@ public abstract class OcppGatewayMqttService
         var topic = MqttTopicService.GetDataTopic(nameof(ChargeTag), chargeTag.TagId, false);
         await PublishStringAsync(topic, payload, true);
     }
+    #endregion
 
     #region MQTT related functions
     protected async void OnConfiguring()
