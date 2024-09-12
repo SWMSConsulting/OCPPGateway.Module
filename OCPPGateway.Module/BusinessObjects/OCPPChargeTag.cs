@@ -30,6 +30,10 @@ public abstract class OCPPChargeTag : BaseObject
     public bool Blocked { get; set; }
 
 
+    [Browsable(false)]
+    public abstract IChargeTagGroup? ChargeTagGroup { get; }
+
+
     #region OCPP related
 
     [Browsable(false)]
@@ -56,7 +60,7 @@ public abstract class OCPPChargeTag : BaseObject
                 TagName = Name,
                 ExpiryDate = ExpiryDate,
                 Blocked = Blocked,
-                ParentTagId = null,
+                ParentTagId = ChargeTagGroup?.Identifier,
             };
         }
     }
