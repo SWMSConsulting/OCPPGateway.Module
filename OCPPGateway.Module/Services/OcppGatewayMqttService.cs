@@ -1,10 +1,14 @@
 ﻿namespace OCPPGateway.Module.Services;
 
+using DevExpress.Data.Filtering;
+using DevExpress.ExpressApp;
+using DevExpress.ExpressApp.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Client;
 using Newtonsoft.Json;
+using OCPPGateway.Module.BusinessObjects;
 using OCPPGateway.Module.Models;
 using System;
 using System.Text;
@@ -20,7 +24,7 @@ public class DataReceivedEventArgs : EventArgs
     public string Identifier { get; set; }
     public string Payload { get; set; }
 }
-public abstract class OcppGatewayMqttService
+public class OcppGatewayMqttService
 {
     private IMqttClient mqttClient;
     private MqttClientOptions options;
@@ -32,9 +36,6 @@ public abstract class OcppGatewayMqttService
     private string[] topicsToSubscribe => [TopicSubscribeData];
 
     private readonly IServiceScopeFactory _serviceScopeFactory;
-
-    public abstract IEnumerable<ChargePoint> GetChargePoints(string? identifier = null);
-    public abstract IEnumerable<ChargeTag> GetChargeTags(string? identifier = null);
 
 
     #region setup
@@ -74,20 +75,6 @@ public abstract class OcppGatewayMqttService
 
         OnConfiguring();
     }
-
-
-    public async void SendInitialData()
-    {
-
-        foreach (var cp in GetChargePoints())
-        {
-            await Publish(cp);
-        }
-        foreach (var ct in GetChargeTags())
-        {
-            await Publish(ct);
-        }
-    }
     #endregion
 
     #region OnDataReceived
@@ -95,8 +82,67 @@ public abstract class OcppGatewayMqttService
     {
         Console.WriteLine($"Payload: {args.Payload}");
 
+        if(args.Type == nameof(UnknownChargePoint))
+        {
+            HandleUnknownChargePoint(args.Payload);
+            return;
+        }
+        if (args.Type == nameof(UnknownChargeTag))
+        {
+            HandleUnknownChargeTag(args.Payload);
+            return;
+        }
 
+    }
 
+    public void HandleUnknownChargePoint(string payload)
+    {
+        var chargePoint = JsonConvert.DeserializeObject<UnknownChargePoint>(payload);
+        if(chargePoint == null)
+        {
+            _logger.LogError("Failed to deserialize UnknownChargePoint");
+            return;
+        }
+
+        using (var scope = _serviceScopeFactory.CreateScope())
+        {
+            var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
+            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace<UnknownTerminal>();
+
+            var existing = objectSpace.FindObject<UnknownTerminal>(CriteriaOperator.Parse("Identifier = ?", chargePoint.ChargePointId));
+            if (existing == null)
+            {
+                existing = objectSpace.CreateObject<UnknownTerminal>();
+                existing.Identifier = chargePoint.ChargePointId;
+            }
+
+            objectSpace.CommitChanges();
+        }
+    }
+
+    public void HandleUnknownChargeTag(string payload)
+    {
+        var chargePoint = JsonConvert.DeserializeObject<UnknownChargeTag>(payload);
+        if (chargePoint == null)
+        {
+            _logger.LogError("Failed to deserialize UnknownChargeTag");
+            return;
+        }
+
+        using (var scope = _serviceScopeFactory.CreateScope())
+        {
+            var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
+            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace<UnknownAccessTag>();
+
+            var existing = objectSpace.FindObject<UnknownAccessTag>(CriteriaOperator.Parse("Identifier = ?", chargePoint.TagId));
+            if (existing == null)
+            {
+                existing = objectSpace.CreateObject<UnknownAccessTag>();
+                existing.Identifier = chargePoint.TagId;
+            }
+
+            objectSpace.CommitChanges();
+        }
     }
     #endregion
 
@@ -145,7 +191,8 @@ public abstract class OcppGatewayMqttService
             OnDataReceived(new DataReceivedEventArgs
             {
                 Type = decodedTopic["type"],
-                Identifier = decodedTopic["identifier"]
+                Identifier = decodedTopic["identifier"],
+                Payload = payload
             });
         }
 
@@ -176,7 +223,6 @@ public abstract class OcppGatewayMqttService
             {
                 await mqttClient.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic(topic).Build());
             }
-            SendInitialData();
         }
         _logger.LogInformation("SUBCRIPTIONS SUCCESSFULL");
     }

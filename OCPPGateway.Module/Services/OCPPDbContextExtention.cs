@@ -7,7 +7,7 @@ public static class OCPPDbContextExtention
 { 
     public static void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<UnknownChargePoint>();
-        modelBuilder.Entity<UnknownChargeTag>();
+        modelBuilder.Entity<UnknownTerminal>();
+        modelBuilder.Entity<UnknownAccessTag>();
     }
 }
