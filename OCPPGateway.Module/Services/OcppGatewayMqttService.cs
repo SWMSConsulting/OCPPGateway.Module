@@ -107,12 +107,12 @@ public class OcppGatewayMqttService
         using (var scope = _serviceScopeFactory.CreateScope())
         {
             var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
-            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace<UnknownTerminal>();
+            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace<UnknownOCPPChargePoint>();
 
-            var existing = objectSpace.FindObject<UnknownTerminal>(CriteriaOperator.Parse("Identifier = ?", chargePoint.ChargePointId));
+            var existing = objectSpace.FindObject<UnknownOCPPChargePoint>(CriteriaOperator.Parse("Identifier = ?", chargePoint.ChargePointId));
             if (existing == null)
             {
-                existing = objectSpace.CreateObject<UnknownTerminal>();
+                existing = objectSpace.CreateObject<UnknownOCPPChargePoint>();
                 existing.Identifier = chargePoint.ChargePointId;
             }
 
@@ -132,12 +132,12 @@ public class OcppGatewayMqttService
         using (var scope = _serviceScopeFactory.CreateScope())
         {
             var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
-            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace<UnknownAccessTag>();
+            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace<UnknownOCPPChargeTag>();
 
-            var existing = objectSpace.FindObject<UnknownAccessTag>(CriteriaOperator.Parse("Identifier = ?", chargePoint.TagId));
+            var existing = objectSpace.FindObject<UnknownOCPPChargeTag>(CriteriaOperator.Parse("Identifier = ?", chargePoint.TagId));
             if (existing == null)
             {
-                existing = objectSpace.CreateObject<UnknownAccessTag>();
+                existing = objectSpace.CreateObject<UnknownOCPPChargeTag>();
                 existing.Identifier = chargePoint.TagId;
             }
 
@@ -147,18 +147,24 @@ public class OcppGatewayMqttService
     #endregion
 
     #region publish
-
     public async Task Publish(ChargePoint chargePoint)
     {
         var payload = JsonConvert.SerializeObject(chargePoint);
         var topic = MqttTopicService.GetDataTopic(nameof(ChargePoint), chargePoint.ChargePointId, false);
         await PublishStringAsync(topic, payload, true);
     }
+
     public async Task Publish(ChargeTag chargeTag)
     {
         var payload = JsonConvert.SerializeObject(chargeTag);
         var topic = MqttTopicService.GetDataTopic(nameof(ChargeTag), chargeTag.TagId, false);
         await PublishStringAsync(topic, payload, true);
+    }
+
+    public async Task ClearRetainFlag(Type type, string identifier, bool fromGateway)
+    {
+        var topic = MqttTopicService.GetDataTopic(type.Name, identifier, fromGateway);
+        await PublishStringAsync(topic, "", true);
     }
     #endregion
 
@@ -183,6 +189,11 @@ public class OcppGatewayMqttService
     private async Task MqttClient_ApplicationMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs arg)
     {
         var payload = arg.ApplicationMessage.ConvertPayloadToString();
+
+        if (string.IsNullOrEmpty(payload))
+        {
+            return;
+        }
 
         var decodedTopic = MqttTopicService.DecodeTopic(arg.ApplicationMessage.Topic);
         

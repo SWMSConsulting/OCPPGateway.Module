@@ -4,7 +4,9 @@ using DevExpress.Persistent.BaseImpl.EF;
 namespace OCPPGateway.Module.BusinessObjects;
 
 [NavigationItem("Unknown")]
-public class UnknownAccessTag: BaseObject
+public class UnknownOCPPChargeTag: BaseObject
 {
     public virtual string Identifier { get; set; }
+
+
 }
