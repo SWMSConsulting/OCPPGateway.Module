@@ -18,11 +18,6 @@ namespace OCPPGateway.Module.BusinessObjects;
 [DisplayName("Charge Point")]
 public abstract class OCPPChargePoint : AssetAdministrationShell
 {
-    [NotMapped]
-    public string Host => "LAPTOP-A71MTVVN";
-    [NotMapped]
-    public string Topic => $"iot/heartbeat";
-
     public override string Caption => Name;
 
     [RuleRequiredField]
