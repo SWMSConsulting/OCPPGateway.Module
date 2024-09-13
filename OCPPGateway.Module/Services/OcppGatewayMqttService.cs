@@ -1,10 +1,17 @@
-﻿namespace OCPPGateway.Module.Services;
+﻿using OCPPGateway.Module.Models;
 
+namespace OCPPGateway.Module.Services;
+
+using DevExpress.Data.Filtering;
+using DevExpress.ExpressApp;
+using DevExpress.ExpressApp.Core;
+using DevExpress.ExpressApp.Security;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Client;
 using Newtonsoft.Json;
+using OCPPGateway.Module.BusinessObjects;
 using OCPPGateway.Module.Models;
 using System;
 using System.Text;
@@ -20,71 +27,24 @@ public class DataReceivedEventArgs : EventArgs
     public string Identifier { get; set; }
     public string Payload { get; set; }
 }
-public abstract class OcppGatewayMqttService
+public class OcppGatewayMqttService
 {
     private IMqttClient mqttClient;
     private MqttClientOptions options;
     private ILogger<OcppGatewayMqttService> _logger;
 
-    // private string TopicSubscribeOcpp16 => MqttTopicService.GetOcppTopic(CommunicationProtocol.OCPP16, "+", "+", true, "+");
-    // private string TopicSubscribeOcpp20 => MqttTopicService.GetOcppTopic(CommunicationProtocol.OCPP20, "+", "+", true, "+");
-    private string TopicSubscribeData => MqttTopicService.GetDataTopic("+", "+", true);
-    private string[] topicsToSubscribe => [TopicSubscribeData];
+    private static string TopicSubscribeDataFromGateway => MqttTopicService.GetDataTopic("+", "+", true);
+    private static string TopicSubscribeDataToGateway => MqttTopicService.GetDataTopic("+", "+", false);
+
+    private string[] topicsToSubscribe => [
+        TopicSubscribeDataFromGateway,
+        TopicSubscribeDataToGateway
+    ];
 
     private readonly IServiceScopeFactory _serviceScopeFactory;
 
-    public abstract IEnumerable<ChargePoint> GetChargePoints(string? identifier = null);
-    public abstract IEnumerable<ChargeTag> GetChargeTags(string? identifier = null);
 
-    public async void OnDataReceived(DataReceivedEventArgs args)
-    {
-        Console.WriteLine($"Payload: {args.Payload}");
-
-        string? identifier = args.Identifier == "all" ? null : args.Identifier;
-
-        switch (args.Type)
-        {
-            case nameof(ChargePoint):
-                var cps = GetChargePoints(identifier);
-                if (cps.Count() < 1)
-                {
-                    Console.WriteLine($"Charge Point {args.Identifier} not found");
-                    return;
-                }
-                foreach (var cp in cps)
-                {
-                    await Publish(cp);
-                }
-                break;
-
-            case nameof(ChargeTag):
-                var cts = GetChargeTags(identifier);
-                if(cts.Count() < 1)
-                {
-                    Console.WriteLine($"Charge Point {args.Identifier} not found");
-                    return;
-                }
-                foreach (var cp in cts)
-                {
-                    await Publish(cp);
-                }
-                break;
-        }
-    }
-
-    public async void SendInitialData()
-    {
-
-        foreach (var cp in GetChargePoints())
-        {
-            await Publish(cp);
-        }
-        foreach (var ct in GetChargeTags())
-        {
-            await Publish(ct);
-        }
-    }
-
+    #region setup
     public OcppGatewayMqttService(
         ILogger<OcppGatewayMqttService> logger,
         IServiceScopeFactory serviceScopeFactory
@@ -121,19 +81,171 @@ public abstract class OcppGatewayMqttService
 
         OnConfiguring();
     }
+    #endregion
 
+    #region OnDataFromGatewayReceived
+    public async void OnDataFromGatewayReceived(DataReceivedEventArgs args)
+    {
+        Console.WriteLine($"Payload: {args.Payload}");
+
+        if (args.Type == nameof(UnknownChargePoint))
+        {
+            HandleUnknownChargePoint(args.Payload);
+            return;
+        }
+
+        if (args.Type == nameof(UnknownChargeTag))
+        {
+            HandleUnknownChargeTag(args.Payload);
+            return;
+        }
+    }
+
+    public void HandleUnknownChargePoint(string payload)
+    {
+        var chargePoint = JsonConvert.DeserializeObject<UnknownChargePoint>(payload);
+        if(chargePoint == null)
+        {
+            _logger.LogError("Failed to deserialize UnknownChargePoint");
+            return;
+        }
+
+        using (var scope = _serviceScopeFactory.CreateScope())
+        {
+            var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
+            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace<UnknownOCPPChargePoint>();
+
+            var existing = objectSpace.FindObject<UnknownOCPPChargePoint>(CriteriaOperator.Parse("Identifier = ?", chargePoint.ChargePointId));
+            if (existing == null)
+            {
+                existing = objectSpace.CreateObject<UnknownOCPPChargePoint>();
+                existing.Identifier = chargePoint.ChargePointId;
+            }
+
+            objectSpace.CommitChanges();
+        }
+    }
+
+    public void HandleUnknownChargeTag(string payload)
+    {
+        var chargeTag = JsonConvert.DeserializeObject<UnknownChargeTag>(payload);
+        if (chargeTag == null)
+        {
+            _logger.LogError("Failed to deserialize UnknownChargeTag");
+            return;
+        }
+
+        using (var scope = _serviceScopeFactory.CreateScope())
+        {
+            var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
+            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace<UnknownOCPPChargeTag>();
+
+            var existing = objectSpace.FindObject<UnknownOCPPChargeTag>(CriteriaOperator.Parse("Identifier = ?", chargeTag.TagId));
+            if (existing == null)
+            {
+                existing = objectSpace.CreateObject<UnknownOCPPChargeTag>();
+                existing.Identifier = chargeTag.TagId;
+            }
+
+            objectSpace.CommitChanges();
+        }
+    }
+    #endregion
+
+    #region OnDataToGatewayReceived
+    public async void OnDataToGatewayReceived(DataReceivedEventArgs args)
+    {
+        Console.WriteLine($"Payload: {args.Payload}");
+
+        if (args.Type == nameof(ChargePoint))
+        {
+            HandleChargePoint(args.Payload);
+            return;
+        }
+        if (args.Type == nameof(ChargeTag))
+        {
+            HandleChargeTag(args.Payload);
+            return;
+        }
+    }
+
+    public void HandleChargePoint(string payload)
+    {
+        var chargePoint = JsonConvert.DeserializeObject<ChargePoint>(payload);
+        if (chargePoint == null)
+        {
+            _logger.LogError("Failed to deserialize ChargePoint");
+            return;
+        }
+
+        using (var scope = _serviceScopeFactory.CreateScope())
+        {
+            var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
+            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace<OCPPChargePoint>();
+
+            var existing = objectSpace.FindObject<OCPPChargePoint>(CriteriaOperator.Parse("Identifier = ?", chargePoint.ChargePointId));
+            if (existing == null)
+            {
+                existing = (OCPPChargePoint)objectSpace.CreateObject(OCPPChargePoint.AssignableType);
+                existing.Identifier = chargePoint.ChargePointId;
+                existing.Name = chargePoint.Name;
+            }
+
+            objectSpace.CommitChanges();
+        }
+    }
+
+    public void HandleChargeTag(string payload)
+    {
+        var chargeTag = JsonConvert.DeserializeObject<ChargeTag>(payload);
+        if (chargeTag == null)
+        {
+            _logger.LogError("Failed to deserialize ChargeTag");
+            return;
+        }
+
+        using (var scope = _serviceScopeFactory.CreateScope())
+        {
+            var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
+            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace<OCPPChargeTag>();
+
+            var existing = objectSpace.FindObject<OCPPChargeTag>(CriteriaOperator.Parse("Identifier = ?", chargeTag.TagId));
+            if (existing == null)
+            {
+                existing = (OCPPChargeTag)objectSpace.CreateObject(OCPPChargeTag.AssignableType);
+                existing.Identifier = chargeTag.TagId;
+                existing.Name = chargeTag.TagName;
+                existing.ExpiryDate = chargeTag.ExpiryDate;
+                existing.Blocked = chargeTag.Blocked ?? false;
+            }
+
+            objectSpace.CommitChanges();
+        }
+    }
+
+    #endregion
+
+    #region publish
     public async Task Publish(ChargePoint chargePoint)
     {
         var payload = JsonConvert.SerializeObject(chargePoint);
         var topic = MqttTopicService.GetDataTopic(nameof(ChargePoint), chargePoint.ChargePointId, false);
         await PublishStringAsync(topic, payload, true);
     }
+
     public async Task Publish(ChargeTag chargeTag)
     {
         var payload = JsonConvert.SerializeObject(chargeTag);
         var topic = MqttTopicService.GetDataTopic(nameof(ChargeTag), chargeTag.TagId, false);
         await PublishStringAsync(topic, payload, true);
     }
+
+    public async Task ClearRetainFlag(Type type, string identifier, bool fromGateway)
+    {
+        var topic = MqttTopicService.GetDataTopic(type.Name, identifier, fromGateway);
+        await PublishStringAsync(topic, "", true);
+    }
+    #endregion
 
     #region MQTT related functions
     protected async void OnConfiguring()
@@ -157,14 +269,30 @@ public abstract class OcppGatewayMqttService
     {
         var payload = arg.ApplicationMessage.ConvertPayloadToString();
 
+        if (string.IsNullOrEmpty(payload))
+        {
+            return;
+        }
+
         var decodedTopic = MqttTopicService.DecodeTopic(arg.ApplicationMessage.Topic);
         
-        if(MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeData))
+        if(MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeDataFromGateway))
         {
-            OnDataReceived(new DataReceivedEventArgs
+            OnDataFromGatewayReceived(new DataReceivedEventArgs
             {
                 Type = decodedTopic["type"],
-                Identifier = decodedTopic["identifier"]
+                Identifier = decodedTopic["identifier"],
+                Payload = payload
+            });
+        }
+
+        if (MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeDataToGateway))
+        {
+            OnDataToGatewayReceived(new DataReceivedEventArgs
+            {
+                Type = decodedTopic["type"],
+                Identifier = decodedTopic["identifier"],
+                Payload = payload
             });
         }
 
@@ -195,7 +323,6 @@ public abstract class OcppGatewayMqttService
             {
                 await mqttClient.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic(topic).Build());
             }
-            SendInitialData();
         }
         _logger.LogInformation("SUBCRIPTIONS SUCCESSFULL");
     }
