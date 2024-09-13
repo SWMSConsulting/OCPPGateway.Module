@@ -53,7 +53,10 @@ public class LineProtocolMessageBuilder
     public LineProtocolMessageBuilder AddTimestamp(DateTimeOffset? timestamp)
     {
         if (timestamp.HasValue)
-            Timestamp = timestamp?.ToUniversalTime().Subtract(new DateTime(1970, 1, 1)).Ticks * 100;
+        {
+            var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            Timestamp = timestamp.Value.ToUniversalTime().Subtract(epoch).Ticks * 100;
+        }
         return this;
     }
     public string Build()
@@ -71,6 +74,6 @@ public class LineProtocolMessageBuilder
         var fields = string.Join(",", Fields.Select(f => $"{f.Key}={f.Value}"));
         string timestamp = Timestamp.HasValue ? $" {Timestamp.Value}" : "";
 
-        return $"{Measurement},{tags} {fields}";
+        return $"{Measurement},{tags} {fields}{timestamp}";
     }
 }
