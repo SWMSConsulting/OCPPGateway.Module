@@ -1,18 +1,46 @@
-﻿using DevExpress.Persistent.Base;
-using DevExpress.Persistent.BaseImpl.EF;
+﻿using DevExpress.ExpressApp.ConditionalAppearance;
+using DevExpress.ExpressApp.DC;
+using DevExpress.ExpressApp.Model;
+using DevExpress.Persistent.Base;
 using DevExpress.Persistent.Validation;
 using MQTTnet.Internal;
 using OCPPGateway.Module.Models;
 using OCPPGateway.Module.Services;
+using SWMS.Influx.Module.Attributes;
+using SWMS.Influx.Module.BusinessObjects;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OCPPGateway.Module.BusinessObjects;
 
 [NavigationItem("Master Data")]
 [DisplayName("Charge Point")]
-public abstract class OCPPChargePoint : BaseObject
+public abstract class OCPPChargePoint : AssetAdministrationShell
 {
+    [NotMapped]
+    public string Host => "LAPTOP-A71MTVVN";
+    [NotMapped]
+    public string Topic => $"iot/heartbeat";
+
+    public override string Caption => Name;
+
+    [RuleRequiredField]
+    public virtual string Identifier { get; set; }
+
+    [RuleRequiredField]
+    public virtual string Name { get; set; }
+
+    [Aggregated]
+    public virtual IList<OCPPChargePointConnector> Connectors { get; set; } = new ObservableCollection<OCPPChargePointConnector>();
+
+
+    [NotMapped]
+    [LastDatapoint("is_online", "heartbeat")]
+    [Appearance("LastHeartbeatDisabled", Enabled = false)]
+    [ModelDefault("DisplayFormat", "{0:dd.MM.yyyy HH:mm:ss}")]
+    public DateTime? LastHeartbeat { get; set; }
+
     public override void OnSaving()
     {
         base.OnSaving();
@@ -27,14 +55,6 @@ public abstract class OCPPChargePoint : BaseObject
             Publish();
         }
     }
-
-    [RuleRequiredField]
-    public virtual string Identifier { get; set; }
-
-    [RuleRequiredField]
-    public virtual string Name { get; set; }
-
-    public virtual IList<OCPPChargePointConnector> Connectors { get; set; } = new ObservableCollection<OCPPChargePointConnector>();
 
     #region OCPP related
 
