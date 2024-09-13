@@ -16,8 +16,16 @@ public abstract class OCPPChargeTag : BaseObject
     {
         base.OnSaving();
 
-        Publish();
+        if(ObjectSpace.IsDeletedObject(this))
+        {
+            var service = ObjectSpace.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
+            service?.ClearRetainFlag(typeof(ChargePoint), Identifier, true).RunInBackground();
+        } else
+        {
+            Publish();
+        }
     }
+
 
     [RuleRequiredField]
     public virtual string Identifier { get; set; }
@@ -25,9 +33,9 @@ public abstract class OCPPChargeTag : BaseObject
     [RuleRequiredField]
     public virtual string Name { get; set; }
 
-    public DateTime? ExpiryDate { get; set; }
+    public virtual DateTime? ExpiryDate { get; set; }
 
-    public bool Blocked { get; set; }
+    public virtual bool Blocked { get; set; }
 
 
     [Browsable(false)]

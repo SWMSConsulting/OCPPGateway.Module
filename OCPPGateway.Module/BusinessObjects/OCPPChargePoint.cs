@@ -17,7 +17,15 @@ public abstract class OCPPChargePoint : BaseObject
     {
         base.OnSaving();
 
-        Publish();
+        if (ObjectSpace.IsDeletedObject(this))
+        {
+            var service = ObjectSpace.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
+            service?.ClearRetainFlag(typeof(ChargePoint), Identifier, true).RunInBackground();
+        }
+        else
+        {
+            Publish();
+        }
     }
 
     [RuleRequiredField]
