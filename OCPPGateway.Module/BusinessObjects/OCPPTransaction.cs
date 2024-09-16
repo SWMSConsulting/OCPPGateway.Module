@@ -1,4 +1,5 @@
 ﻿using DevExpress.Data.Filtering;
+using DevExpress.ExpressApp.Model;
 using DevExpress.Persistent.Base;
 using DevExpress.Persistent.BaseImpl.EF;
 using System.ComponentModel;
@@ -14,11 +15,15 @@ public abstract class OCPPTransaction: BaseObject
     public virtual OCPPChargePointConnector ChargePointConnector { get; set; }
     
     public virtual string StartTagId { get; set; }
+
+    [ModelDefault("DisplayFormat", "{0:G}")]
     public virtual DateTime StartTime { get; set; }
     public virtual double StartMeter { get; set; }
     // public string StartResult { get; set; }
 
     public virtual string StopTagId { get; set; }
+
+    [ModelDefault("DisplayFormat", "{0:G}")]
     public virtual DateTime? StopTime { get; set; }
     public virtual double? StopMeter { get; set; }
     public virtual string StopReason { get; set; }
