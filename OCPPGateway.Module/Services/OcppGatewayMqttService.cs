@@ -99,6 +99,12 @@ public class OcppGatewayMqttService
             HandleUnknownChargeTag(args.Payload);
             return;
         }
+
+        if (args.Type == nameof(Transaction))
+        {
+            HandleTransaction(args.Payload);
+            return;
+        }
     }
 
     public void HandleUnknownChargePoint(string payload)
@@ -146,6 +152,55 @@ public class OcppGatewayMqttService
                 existing = objectSpace.CreateObject<UnknownOCPPChargeTag>();
                 existing.Identifier = chargeTag.TagId;
             }
+
+            objectSpace.CommitChanges();
+        }
+    }
+
+    public void HandleTransaction(string payload)
+    {
+        var transaction = JsonConvert.DeserializeObject<Transaction>(payload);
+        if (transaction == null)
+        {
+            _logger.LogError("Failed to deserialize Transaction");
+            return;
+        }
+
+        using (var scope = _serviceScopeFactory.CreateScope())
+        {
+            var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
+            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace<OCPPTransaction>();
+
+            var chargePoint = objectSpace.FindObject<OCPPChargePoint>(CriteriaOperator.Parse("Identifier = ?", transaction.ChargePointId));
+            if (chargePoint == null)
+            {
+                _logger.LogError("ChargePoint not found");
+                return;
+            }
+
+            var connector = chargePoint.Connectors.FirstOrDefault(c => c.Identifier == transaction.ConnectorId);
+            if (connector == null)
+            {
+                _logger.LogError("Connector not found");
+                return;
+            }
+
+            var existingTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId == transaction.TransactionId);
+            if (existingTransaction == null)
+            {
+                existingTransaction = objectSpace.CreateObject<OCPPTransaction>();
+                existingTransaction.TransactionId = transaction.TransactionId;
+                existingTransaction.ChargePointConnector = connector;
+            }
+
+            existingTransaction.StartTime = transaction.StartTime;
+            existingTransaction.StartMeter = transaction.MeterStart;
+            existingTransaction.StartTagId = transaction.StartTagId ?? "";
+
+            existingTransaction.StopTime = transaction.StopTime;
+            existingTransaction.StopMeter = transaction.MeterStop;
+            existingTransaction.StopTagId = transaction.StopTagId ?? "";
+            existingTransaction.StopReason = transaction.StopReason ?? "";
 
             objectSpace.CommitChanges();
         }
