@@ -1,5 +1,7 @@
 ﻿using DevExpress.ExpressApp.ConditionalAppearance;
 using DevExpress.Persistent.Base;
+using MQTTnet.Internal;
+using OCPPGateway.Module.Services;
 using SWMS.Influx.Module.BusinessObjects;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -40,4 +42,34 @@ public abstract class OCPPChargePointConnector: AssetAdministrationShell
 
     [NotMapped]
     public override string Caption => string.IsNullOrEmpty(Name) ? $"{ChargePoint.Name} - {Identifier}" : Name;
+
+    [Action(
+        Caption = "Start Transaction",
+        TargetObjectsCriteria = "IsInUse == false"
+    )]
+    public void RemoteStartTransaction()
+    {
+        if (ActiveTransaction != null)
+        {
+            return;
+        }
+
+        var service = ObjectSpace.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
+        service?.RemoteStartTransaction(this).RunInBackground();
+    }
+
+    [Action(
+        Caption = "Stop Transaction",
+        TargetObjectsCriteria = "IsInUse"
+    )]
+    public void RemoteStopTransaction()
+    {
+        if (ActiveTransaction == null)
+        {
+            return;
+        }
+
+        var service = ObjectSpace.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
+        service?.RemoteStopTransaction(this).RunInBackground();
+    }
 }

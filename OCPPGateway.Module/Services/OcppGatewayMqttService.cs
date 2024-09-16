@@ -12,6 +12,7 @@ using MQTTnet;
 using MQTTnet.Client;
 using Newtonsoft.Json;
 using OCPPGateway.Module.BusinessObjects;
+using OCPPGateway.Module.Messages_OCPP16;
 using OCPPGateway.Module.Models;
 using System;
 using System.Text;
@@ -81,6 +82,50 @@ public class OcppGatewayMqttService
 
         OnConfiguring();
     }
+    #endregion
+
+    #region RemoteControl
+    public async Task RemoteStartTransaction(OCPPChargePointConnector connector)
+    {
+        var transaction = connector.ActiveTransaction;
+        if (transaction != null)
+        {
+            return;
+        }
+
+        var request = new RemoteStartTransactionRequest
+        {
+            connectorId = connector.Identifier,
+            idTag = "12345678"
+        };
+
+        var payload = JsonConvert.SerializeObject(request);
+        var chargePoint = connector.ChargePoint.Identifier;
+        var topic = MqttTopicService.GetDataTopic("RemoteStartTransaction", chargePoint, false);
+
+        await PublishStringAsync(topic, payload, false);
+    }
+
+    public async Task RemoteStopTransaction(OCPPChargePointConnector connector)
+    {
+        var transaction = connector.ActiveTransaction;
+        if (transaction == null || transaction.IsStopped)
+        {
+            return;
+        }
+
+        var request = new RemoteStopTransactionRequest
+        {
+            transactionId = transaction.TransactionId
+        };
+
+        var payload = JsonConvert.SerializeObject(request);
+        var chargePoint = connector.ChargePoint.Identifier;
+        var topic = MqttTopicService.GetDataTopic("RemoteStopTransaction", chargePoint, false);
+
+        await PublishStringAsync(topic, payload, false);
+    }
+
     #endregion
 
     #region OnDataFromGatewayReceived
