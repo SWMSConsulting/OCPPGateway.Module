@@ -16,5 +16,5 @@ public partial class Transaction
     public DateTime? StopTime { get; set; }
     public double? MeterStop { get; set; }
     public string StopReason { get; set; }
-    public virtual ChargePoint ChargePoint { get; set; }
+    //public virtual ChargePoint ChargePoint { get; set; }
 }
