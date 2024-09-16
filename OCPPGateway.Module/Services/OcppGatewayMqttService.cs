@@ -99,6 +99,12 @@ public class OcppGatewayMqttService
             HandleUnknownChargeTag(args.Payload);
             return;
         }
+
+        if (args.Type == nameof(Transaction))
+        {
+            HandleTransaction(args.Payload);
+            return;
+        }
     }
 
     public void HandleUnknownChargePoint(string payload)
@@ -146,6 +152,62 @@ public class OcppGatewayMqttService
                 existing = objectSpace.CreateObject<UnknownOCPPChargeTag>();
                 existing.Identifier = chargeTag.TagId;
             }
+
+            objectSpace.CommitChanges();
+        }
+    }
+
+    public void HandleTransaction(string payload)
+    {
+        var transaction = JsonConvert.DeserializeObject<Transaction>(payload);
+        if (transaction == null)
+        {
+            _logger.LogError("Failed to deserialize Transaction");
+            return;
+        }
+
+        using (var scope = _serviceScopeFactory.CreateScope())
+        {
+            var type = OCPPTransaction.AssignableType;
+            if (type == null)
+            {
+                _logger.LogError("AssignableType not found");
+                return;
+            }
+
+            var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
+            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace(OCPPTransaction.AssignableType);
+
+            var chargePoint = objectSpace.FindObject<OCPPChargePoint>(CriteriaOperator.Parse("Identifier = ?", transaction.ChargePointId));
+            if (chargePoint == null)
+            {
+                _logger.LogError("ChargePoint not found");
+                return;
+            }
+
+            var connector = chargePoint.Connectors.FirstOrDefault(c => c.Identifier == transaction.ConnectorId);
+            if (connector == null)
+            {
+                _logger.LogError("Connector not found");
+                return;
+            }
+
+            var existingTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId == transaction.TransactionId);
+            if (existingTransaction == null)
+            {
+                existingTransaction = (OCPPTransaction)objectSpace.CreateObject(type);
+                existingTransaction.TransactionId = transaction.TransactionId;
+                connector.Transactions.Add(existingTransaction);
+            }
+
+            existingTransaction.StartTime = transaction.StartTime;
+            existingTransaction.StartMeter = transaction.MeterStart;
+            existingTransaction.StartTagId = transaction.StartTagId ?? "";
+
+            existingTransaction.StopTime = transaction.StopTime;
+            existingTransaction.StopMeter = transaction.MeterStop;
+            existingTransaction.StopTagId = transaction.StopTagId ?? "";
+            existingTransaction.StopReason = transaction.StopReason ?? "";
 
             objectSpace.CommitChanges();
         }
@@ -206,13 +268,15 @@ public class OcppGatewayMqttService
 
         using (var scope = _serviceScopeFactory.CreateScope())
         {
-            var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
-            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace<OCPPChargeTag>();
+            var type = OCPPChargeTag.AssignableType;
 
-            var existing = objectSpace.FindObject<OCPPChargeTag>(CriteriaOperator.Parse("Identifier = ?", chargeTag.TagId));
+            var objectSpaceFactory = scope.ServiceProvider.GetRequiredService<INonSecuredObjectSpaceFactory>();
+            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace(type);
+
+            OCPPChargeTag? existing = objectSpace.FindObject(type, CriteriaOperator.Parse("Identifier = ?", chargeTag.TagId)) as OCPPChargeTag;
             if (existing == null)
             {
-                existing = (OCPPChargeTag)objectSpace.CreateObject(OCPPChargeTag.AssignableType);
+                existing = (OCPPChargeTag)objectSpace.CreateObject(type);
                 existing.Identifier = chargeTag.TagId;
                 existing.Name = chargeTag.TagName;
                 existing.ExpiryDate = chargeTag.ExpiryDate;
