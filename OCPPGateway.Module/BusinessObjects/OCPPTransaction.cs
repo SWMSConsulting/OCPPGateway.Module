@@ -8,7 +8,7 @@ namespace OCPPGateway.Module.BusinessObjects;
 
 [NavigationItem("OCPP")]
 [DisplayName("Transaction")]
-public class OCPPTransaction: BaseObject
+public abstract class OCPPTransaction: BaseObject
 {
     public virtual int TransactionId { get; set; }
     public virtual OCPPChargePointConnector ChargePointConnector { get; set; }
@@ -25,6 +25,9 @@ public class OCPPTransaction: BaseObject
 
 
     [NotMapped]
+    public bool IsStopped => StopTime.HasValue;
+
+    [NotMapped]
     [Browsable(false)]
     public OCPPChargeTag? StartTag => ObjectSpace?.FindObject<OCPPChargeTag>(CriteriaOperator.Parse("Identifier == ?", StartTagId));
 
@@ -38,4 +41,18 @@ public class OCPPTransaction: BaseObject
 
     [NotMapped]
     public double? Consumption => StopMeter.HasValue ? StopMeter - StartMeter : null;
+
+    [Browsable(false)]
+    public static Type? AssignableType
+    {
+        get
+        {
+            var type = typeof(OCPPTransaction);
+            return AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(s => s.GetTypes())
+                .Where(t => t != type && type.IsAssignableFrom(t))
+                .FirstOrDefault();
+        }
+    }
+
 }

@@ -168,8 +168,15 @@ public class OcppGatewayMqttService
 
         using (var scope = _serviceScopeFactory.CreateScope())
         {
+            var type = OCPPTransaction.AssignableType;
+            if (type == null)
+            {
+                _logger.LogError("AssignableType not found");
+                return;
+            }
+
             var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
-            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace<OCPPTransaction>();
+            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace(OCPPTransaction.AssignableType);
 
             var chargePoint = objectSpace.FindObject<OCPPChargePoint>(CriteriaOperator.Parse("Identifier = ?", transaction.ChargePointId));
             if (chargePoint == null)
@@ -188,9 +195,9 @@ public class OcppGatewayMqttService
             var existingTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId == transaction.TransactionId);
             if (existingTransaction == null)
             {
-                existingTransaction = objectSpace.CreateObject<OCPPTransaction>();
+                existingTransaction = (OCPPTransaction)objectSpace.CreateObject(type);
                 existingTransaction.TransactionId = transaction.TransactionId;
-                existingTransaction.ChargePointConnector = connector;
+                connector.Transactions.Add(existingTransaction);
             }
 
             existingTransaction.StartTime = transaction.StartTime;
@@ -261,13 +268,15 @@ public class OcppGatewayMqttService
 
         using (var scope = _serviceScopeFactory.CreateScope())
         {
-            var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
-            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace<OCPPChargeTag>();
+            var type = OCPPChargeTag.AssignableType;
 
-            var existing = objectSpace.FindObject<OCPPChargeTag>(CriteriaOperator.Parse("Identifier = ?", chargeTag.TagId));
+            var objectSpaceFactory = scope.ServiceProvider.GetRequiredService<INonSecuredObjectSpaceFactory>();
+            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace(type);
+
+            OCPPChargeTag? existing = objectSpace.FindObject(type, CriteriaOperator.Parse("Identifier = ?", chargeTag.TagId)) as OCPPChargeTag;
             if (existing == null)
             {
-                existing = (OCPPChargeTag)objectSpace.CreateObject(OCPPChargeTag.AssignableType);
+                existing = (OCPPChargeTag)objectSpace.CreateObject(type);
                 existing.Identifier = chargeTag.TagId;
                 existing.Name = chargeTag.TagName;
                 existing.ExpiryDate = chargeTag.ExpiryDate;

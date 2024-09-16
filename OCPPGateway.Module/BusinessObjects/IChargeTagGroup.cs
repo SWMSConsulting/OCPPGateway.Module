@@ -2,9 +2,9 @@
 
 public interface IChargeTagGroup
 {
-    public string Name { get; set; }
+    public string Name { get; }
     
-    public string Identifier { get; set; }
+    public string Identifier { get; }
 
-    public IList<OCPPChargeTag> ChargeTags { get; set; }
+    public IList<OCPPChargeTag> ChargeTags { get; }
 }

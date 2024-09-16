@@ -10,6 +10,7 @@ public static class OCPPDbContextExtention
         modelBuilder.Entity<UnknownOCPPChargeTag>();
 
         // abstract classes
+        modelBuilder.Entity<OCPPTransaction>();
         modelBuilder.Entity<OCPPChargeTag>();
     }
 }
