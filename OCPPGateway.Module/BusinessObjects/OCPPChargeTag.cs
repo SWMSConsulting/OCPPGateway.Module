@@ -8,7 +8,7 @@ using System.ComponentModel;
 
 namespace OCPPGateway.Module.BusinessObjects;
 
-[NavigationItem("Master Data")]
+[NavigationItem("OCPP")]
 [DisplayName("Charge Tag")]
 public abstract class OCPPChargeTag : BaseObject
 {

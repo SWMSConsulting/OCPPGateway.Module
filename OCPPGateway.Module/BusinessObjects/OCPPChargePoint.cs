@@ -14,7 +14,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OCPPGateway.Module.BusinessObjects;
 
-[NavigationItem("Master Data")]
+[NavigationItem("OCPP")]
 [DisplayName("Charge Point")]
 public abstract class OCPPChargePoint : AssetAdministrationShell
 {
