@@ -8,9 +8,9 @@ using System;
 public class SetChargingProfileRequest
 {
     [JsonProperty("connectorId", Required = Required.Always)]
-    public int connectorId { get; set; }
+    public int ConnectorId { get; set; }
 
 
     [JsonProperty("csChargingProfiles", Required = Required.Always)]
-    public ChargingProfile csChargingProfiles { get; set; }
+    public ChargingProfile CsChargingProfiles { get; set; }
 }
