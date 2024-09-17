@@ -1,11 +1,6 @@
 ﻿using OCPPGateway.Module.Models;
-
-namespace OCPPGateway.Module.Services;
-
 using DevExpress.Data.Filtering;
-using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.Core;
-using DevExpress.ExpressApp.Security;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MQTTnet;
@@ -13,9 +8,10 @@ using MQTTnet.Client;
 using Newtonsoft.Json;
 using OCPPGateway.Module.BusinessObjects;
 using OCPPGateway.Module.Messages_OCPP16;
-using OCPPGateway.Module.Models;
 using System;
 using System.Text;
+
+namespace OCPPGateway.Module.Services;
 
 public enum OCPPVersion
 {
@@ -30,9 +26,14 @@ public class DataReceivedEventArgs : EventArgs
 }
 public class OcppGatewayMqttService
 {
+
+    // this should be overridden in the derived class, because this is project specific
+    public virtual void OnDataTransferReceived(DataReceivedEventArgs args) { }
+
+
     private IMqttClient mqttClient;
     private MqttClientOptions options;
-    private ILogger<OcppGatewayMqttService> _logger;
+    public readonly ILogger<OcppGatewayMqttService> _logger;
 
     private static string TopicSubscribeDataFromGateway => MqttTopicService.GetDataTopic("+", "+", true);
     private static string TopicSubscribeDataToGateway => MqttTopicService.GetDataTopic("+", "+", false);
@@ -42,7 +43,7 @@ public class OcppGatewayMqttService
         TopicSubscribeDataToGateway
     ];
 
-    private readonly IServiceScopeFactory _serviceScopeFactory;
+    public readonly IServiceScopeFactory _serviceScopeFactory;
 
 
     #region setup
@@ -148,6 +149,12 @@ public class OcppGatewayMqttService
         if (args.Type == nameof(Transaction))
         {
             HandleTransaction(args.Payload);
+            return;
+        }
+
+        if (args.Type == "DataTransfer")
+        {
+            OnDataTransferReceived(args);
             return;
         }
     }
@@ -335,6 +342,12 @@ public class OcppGatewayMqttService
     #endregion
 
     #region publish
+    public async Task Publish(DataTransferRequest dataTransferRequest, string chargePointId)
+    {
+        var payload = JsonConvert.SerializeObject(dataTransferRequest);
+        var topic = MqttTopicService.GetDataTopic("DataTransfer", chargePointId, false);
+        await PublishStringAsync(topic, payload, true);
+    }
     public async Task Publish(ChargePoint chargePoint)
     {
         var payload = JsonConvert.SerializeObject(chargePoint);
