@@ -7,7 +7,7 @@ public class SetChargingProfileResponse
 {
     [JsonProperty("status", Required = Required.Always)]
     [JsonConverter(typeof(StringEnumConverter))]
-    public SetChargingProfileStatus status { get; set; }
+    public SetChargingProfileStatus Status { get; set; }
 }
 
 public enum SetChargingProfileStatus

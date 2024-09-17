@@ -6,42 +6,42 @@ namespace OCPPGateway.Module.Messages_OCPP16;
 public class ChargingProfile
 {
     [JsonProperty("chargingProfileId", Required = Required.Always)]
-    public int chargingProfileId { get; set; }
+    public int ChargingProfileId { get; set; }
 
 
     [JsonProperty("transactionId", Required = Required.Default)]
-    public int transactionId { get; set; }
+    public int TransactionId { get; set; }
 
 
     [JsonProperty("stackLevel", Required = Required.Always)]
-    public int stackLevel { get; set; }
+    public int StackLevel { get; set; }
 
 
     [JsonProperty("chargingProfilePurpose", Required = Required.Always)]
     [JsonConverter(typeof(StringEnumConverter))]
-    public ChargingProfilePurpose chargingProfilePurpose { get; set; }
+    public ChargingProfilePurpose ChargingProfilePurpose { get; set; }
 
 
     [JsonProperty("chargingProfileKind", Required = Required.Always)]
     [JsonConverter(typeof(StringEnumConverter))]
-    public ChargingProfileKind chargingProfileKind { get; set; }
+    public ChargingProfileKind ChargingProfileKind { get; set; }
 
 
     [JsonProperty("recurrencyKind", Required = Required.Default)]
     [JsonConverter(typeof(StringEnumConverter))]
-    public RecurrencyKind recurrencyKind { get; set; }
+    public RecurrencyKind RecurrencyKind { get; set; }
 
 
     [JsonProperty("validFrom", Required = Required.Default)]
-    public DateTime validFrom { get; set; }
+    public DateTime ValidFrom { get; set; }
 
 
     [JsonProperty("validTo", Required = Required.Default)]
-    public DateTime validTo { get; set; }
+    public DateTime ValidTo { get; set; }
 
 
     [JsonProperty("chargingSchedule", Required = Required.Always)]
-    public ChargingProfileSchedule chargingProfileSchedule { get; set; }
+    public ChargingProfileSchedule ChargingProfileSchedule { get; set; }
 }
 
 public enum ChargingProfilePurpose
@@ -80,24 +80,24 @@ public enum RecurrencyKind
 public class ChargingProfileSchedule
 {
     [JsonProperty("duration", Required = Required.Default)]
-    public int duration { get; set; }
+    public int Furation { get; set; }
 
 
     [JsonProperty("startSchedule", Required = Required.Default)]
-    public DateTime startSchedule { get; set; }
+    public DateTime StartSchedule { get; set; }
 
 
     [JsonProperty("chargingRateUnit", Required = Required.Always)]
     [JsonConverter(typeof(StringEnumConverter))]
-    public ChargingRateUnit chargingRateUnit { get; set; }
+    public ChargingRateUnit ChargingRateUnit { get; set; }
 
 
     [JsonProperty("chargingSchedulePeriod", Required = Required.Always)]
-    public ChargingSchedulePeriod[] chargingSchedulePeriod { get; set; }
+    public ChargingSchedulePeriod[] ChargingSchedulePeriod { get; set; }
 
 
     [JsonProperty("minChargingRate", Required = Required.Default)]
-    public double minChargingRate { get; set; } // multiple of 0.1
+    public double MinChargingRate { get; set; } // multiple of 0.1
 }
 
 public enum ChargingRateUnit
@@ -112,9 +112,9 @@ public enum ChargingRateUnit
 public class ChargingSchedulePeriod
 {
     [JsonProperty("startPeriod", Required = Required.Always)]
-    public int startPeriod { get; set; }
+    public int StartPeriod { get; set; }
 
 
     [JsonProperty("limit", Required = Required.Always)]
-    public double limit { get; set; } // multiple of 0.1
+    public double Limit { get; set; } // multiple of 0.1
 }
