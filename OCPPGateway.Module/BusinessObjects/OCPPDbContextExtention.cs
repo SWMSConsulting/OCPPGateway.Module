@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SWMS.Influx.Module.BusinessObjects;
 
 namespace OCPPGateway.Module.BusinessObjects;
 

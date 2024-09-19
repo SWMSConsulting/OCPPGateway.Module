@@ -18,7 +18,7 @@ public abstract class OCPPChargePointConnector: AssetAdministrationShell
     {
         base.OnSaving();
 
-        if (Identifier == 0 && ChargePoint.Connectors.Count > 0)
+        if (Identifier == 0 && ChargePoint != null && ChargePoint.Connectors.Count > 0)
         {
             Identifier = ChargePoint.Connectors.Max(c => c.Identifier) + 1;
         }
