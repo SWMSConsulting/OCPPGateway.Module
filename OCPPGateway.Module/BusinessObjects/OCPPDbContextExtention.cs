@@ -7,6 +7,8 @@ public static class OCPPDbContextExtention
 {
     public static void OnModelCreating(ModelBuilder modelBuilder)
     {
+        InfluxDbContextExtention.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<UnknownOCPPChargePoint>();
         modelBuilder.Entity<UnknownOCPPChargeTag>();
 
