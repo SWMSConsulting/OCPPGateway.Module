@@ -1,5 +1,6 @@
 ﻿using DevExpress.ExpressApp.ConditionalAppearance;
 using DevExpress.Persistent.Base;
+using DevExpress.Persistent.BaseImpl.EF;
 using MQTTnet.Internal;
 using OCPPGateway.Module.Services;
 using SWMS.Influx.Module.BusinessObjects;
@@ -11,8 +12,8 @@ namespace OCPPGateway.Module.BusinessObjects;
 
 [NavigationItem("OCPP")]
 [DisplayName("Charge Point Connector")]
-[DefaultProperty(nameof(Caption))]
-public abstract class OCPPChargePointConnector: AssetAdministrationShell
+//[DefaultProperty(nameof(Caption))]
+public abstract class OCPPChargePointConnector: BaseObject // AssetAdministrationShell
 {
     public override void OnSaving()
     {
@@ -40,8 +41,8 @@ public abstract class OCPPChargePointConnector: AssetAdministrationShell
     [NotMapped]
     public string? ConnectedRfid => ActiveTransaction?.StartTag?.Identifier;
 
-    [NotMapped]
-    public override string Caption => string.IsNullOrEmpty(Name) ? $"{ChargePoint.Name} - {Identifier}" : Name;
+    //[NotMapped]
+    //public override string Caption => string.IsNullOrEmpty(Name) ? $"{ChargePoint.Name} - {Identifier}" : Name;
 
     [Action(
         Caption = "Start Transaction",

@@ -2,6 +2,7 @@
 using DevExpress.ExpressApp.DC;
 using DevExpress.ExpressApp.Model;
 using DevExpress.Persistent.Base;
+using DevExpress.Persistent.BaseImpl.EF;
 using DevExpress.Persistent.Validation;
 using MQTTnet.Internal;
 using OCPPGateway.Module.Models;
@@ -16,9 +17,9 @@ namespace OCPPGateway.Module.BusinessObjects;
 
 [NavigationItem("OCPP")]
 [DisplayName("Charge Point")]
-public abstract class OCPPChargePoint : AssetAdministrationShell
+public abstract class OCPPChargePoint : BaseObject //: AssetAdministrationShell
 {
-    public override string Caption => Name;
+    // public override string Caption => Name;
 
     [RuleRequiredField]
     public virtual string Identifier { get; set; }
@@ -31,7 +32,7 @@ public abstract class OCPPChargePoint : AssetAdministrationShell
 
 
     [NotMapped]
-    [LastDatapoint("is_online", "heartbeat")]
+    //[LastDatapoint("is_online", "heartbeat")]
     [Appearance("LastHeartbeatDisabled", Enabled = false)]
     [ModelDefault("DisplayFormat", "{0:dd.MM.yyyy HH:mm:ss}")]
     public DateTime? LastHeartbeat { get; set; }
