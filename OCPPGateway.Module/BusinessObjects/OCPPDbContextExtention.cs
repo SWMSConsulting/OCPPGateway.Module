@@ -15,5 +15,12 @@ public static class OCPPDbContextExtention
         // abstract classes
         modelBuilder.Entity<OCPPTransaction>();
         modelBuilder.Entity<OCPPChargeTag>();
+
+        modelBuilder.Entity<OCPPChargePoint>()
+            .HasMany(c => c.Connectors)
+            .WithOne(c => c.ChargePoint)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<OCPPChargePointConnector>();
     }
 }
