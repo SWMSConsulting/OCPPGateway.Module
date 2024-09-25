@@ -4,20 +4,20 @@
     {
         private static string baseTopic = Environment.GetEnvironmentVariable("MQTT_BASE_TOPIC") ?? "";
 
-        public static string GetOcppTopic(OCPPVersion protocol, string clientId, string action, bool fromGateway)
+        public static string GetOcppTopic(OCPPVersion protocol, string clientId, string action, bool fromChargePoint)
         {
-            return GetOcppTopic(protocol.ToString().ToLowerInvariant(), clientId, action, fromGateway);
+            return GetOcppTopic(protocol.ToString().ToLowerInvariant(), clientId, action, fromChargePoint);
         }
 
-        private static string GetOcppTopic(string protocol, string clientId, string action, bool fromGateway)
+        private static string GetOcppTopic(string protocol, string clientId, string action, bool fromChargePoint)
         {
-            var direction = fromGateway ? "out" : "in";
+            var direction = fromChargePoint ? "in" : "out";
             return $"{baseTopic}{protocol}/{clientId}/{action}/{direction}";
         }
 
-        public static string GetDataTopic(string type, string identifier, bool fromGateway)
+        public static string GetDataTopic(string type, string identifier, bool fromChargePoint)
         {
-            var direction = fromGateway ? "out" : "in";
+            var direction = fromChargePoint ? "in" : "out";
             return $"{baseTopic}data/{type}/{identifier}/{direction}";
         }
 
