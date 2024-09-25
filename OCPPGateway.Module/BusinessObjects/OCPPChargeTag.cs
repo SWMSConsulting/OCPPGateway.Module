@@ -19,7 +19,7 @@ public abstract class OCPPChargeTag : BaseObject
         if(ObjectSpace.IsDeletedObject(this))
         {
             var service = ObjectSpace.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
-            service?.ClearRetainFlag(typeof(ChargePoint), Identifier, true).RunInBackground();
+            service?.ClearRetainFlag(typeof(ChargePoint), Identifier, false).RunInBackground();
         } else
         {
             Publish();

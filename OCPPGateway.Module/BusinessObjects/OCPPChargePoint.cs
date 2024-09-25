@@ -29,6 +29,8 @@ public abstract class OCPPChargePoint : AssetAdministrationShell
     [Aggregated]
     public virtual IList<OCPPChargePointConnector> Connectors { get; set; } = new ObservableCollection<OCPPChargePointConnector>();
 
+    [NotMapped]
+    public int NumberOfConnectors => Connectors.Count;
 
     [NotMapped]
     [LastDatapoint("is_online", "heartbeat")]
@@ -43,7 +45,7 @@ public abstract class OCPPChargePoint : AssetAdministrationShell
         if (ObjectSpace.IsDeletedObject(this))
         {
             var service = ObjectSpace.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
-            service?.ClearRetainFlag(typeof(ChargePoint), Identifier, true).RunInBackground();
+            service?.ClearRetainFlag(typeof(ChargePoint), Identifier, false).RunInBackground();
         }
         else
         {

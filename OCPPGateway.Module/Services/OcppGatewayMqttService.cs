@@ -35,12 +35,10 @@ public class OcppGatewayMqttService
     private MqttClientOptions options;
     public readonly ILogger<OcppGatewayMqttService> _logger;
 
-    private static string TopicSubscribeDataFromGateway => MqttTopicService.GetDataTopic("+", "+", true);
-    private static string TopicSubscribeDataToGateway => MqttTopicService.GetDataTopic("+", "+", false);
+    private static string TopicSubscribeDataFromChargePoint => MqttTopicService.GetDataTopic("+", "+", true);
 
     private string[] topicsToSubscribe => [
-        TopicSubscribeDataFromGateway,
-        TopicSubscribeDataToGateway
+        TopicSubscribeDataFromChargePoint
     ];
 
     public readonly IServiceScopeFactory _serviceScopeFactory;
@@ -362,9 +360,9 @@ public class OcppGatewayMqttService
         await PublishStringAsync(topic, payload, true);
     }
 
-    public async Task ClearRetainFlag(Type type, string identifier, bool fromGateway)
+    public async Task ClearRetainFlag(Type type, string identifier, bool fromChargePoint)
     {
-        var topic = MqttTopicService.GetDataTopic(type.Name, identifier, fromGateway);
+        var topic = MqttTopicService.GetDataTopic(type.Name, identifier, fromChargePoint);
         await PublishStringAsync(topic, "", true);
     }
     #endregion
@@ -398,7 +396,7 @@ public class OcppGatewayMqttService
 
         var decodedTopic = MqttTopicService.DecodeTopic(arg.ApplicationMessage.Topic);
         
-        if(MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeDataFromGateway))
+        if(MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeDataFromChargePoint))
         {
             OnDataFromGatewayReceived(new DataReceivedEventArgs
             {
@@ -407,7 +405,7 @@ public class OcppGatewayMqttService
                 Payload = payload
             });
         }
-
+        /*
         if (MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeDataToGateway))
         {
             OnDataToGatewayReceived(new DataReceivedEventArgs
@@ -417,6 +415,7 @@ public class OcppGatewayMqttService
                 Payload = payload
             });
         }
+        */
 
     }
 
