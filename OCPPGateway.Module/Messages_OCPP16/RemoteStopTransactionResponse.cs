@@ -7,6 +7,6 @@ public class RemoteStopTransactionResponse
 {
     [JsonProperty("status", Required = Required.Always)]
     [JsonConverter(typeof(StringEnumConverter))]
-    public RemoteResponseStatus status { get; set; }
+    public RemoteResponseStatus Status { get; set; }
 }
 
