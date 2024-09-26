@@ -10,6 +10,7 @@ using OCPPGateway.Module.BusinessObjects;
 using OCPPGateway.Module.Messages_OCPP16;
 using System;
 using System.Text;
+using OCPPGateway.Module.NonPersistentObjects;
 
 namespace OCPPGateway.Module.Services;
 
@@ -30,15 +31,19 @@ public class OcppGatewayMqttService
     // this should be overridden in the derived class, because this is project specific
     public virtual void OnDataTransferReceived(DataReceivedEventArgs args) { }
 
+    public EventHandler<DataReceivedEventArgs> DataFromGatewayReceived;
+    public EventHandler<DataReceivedEventArgs> DataToGatewayReceived;
 
     private IMqttClient mqttClient;
     private MqttClientOptions options;
     public readonly ILogger<OcppGatewayMqttService> _logger;
 
     private static string TopicSubscribeDataFromChargePoint => MqttTopicService.GetDataTopic("+", "+", true);
+    private static string TopicSubscribeDataToChargePoint => MqttTopicService.GetDataTopic("+", "+", false);
 
     private string[] topicsToSubscribe => [
-        TopicSubscribeDataFromChargePoint
+        TopicSubscribeDataFromChargePoint,
+        TopicSubscribeDataToChargePoint
     ];
 
     public readonly IServiceScopeFactory _serviceScopeFactory;
@@ -130,7 +135,7 @@ public class OcppGatewayMqttService
     #region OnDataFromGatewayReceived
     public async void OnDataFromGatewayReceived(DataReceivedEventArgs args)
     {
-        Console.WriteLine($"Payload: {args.Payload}");
+        DataFromGatewayReceived?.Invoke(this, args);
 
         if (args.Type == nameof(UnknownChargePoint))
         {
@@ -267,18 +272,7 @@ public class OcppGatewayMqttService
     #region OnDataToGatewayReceived
     public async void OnDataToGatewayReceived(DataReceivedEventArgs args)
     {
-        Console.WriteLine($"Payload: {args.Payload}");
-
-        if (args.Type == nameof(ChargePoint))
-        {
-            HandleChargePoint(args.Payload);
-            return;
-        }
-        if (args.Type == nameof(ChargeTag))
-        {
-            HandleChargeTag(args.Payload);
-            return;
-        }
+        DataToGatewayReceived?.Invoke(this, args);
     }
 
     public void HandleChargePoint(string payload)
@@ -360,6 +354,17 @@ public class OcppGatewayMqttService
         await PublishStringAsync(topic, payload, true);
     }
 
+    public async Task Publish(OCPPRemoteControl control)
+    {
+        if (control.ChargePoint == null || control.Request == null || !control.IsValidPayload)
+        {
+            return;
+        }
+        string type = control.Request.Name;
+        var topic = MqttTopicService.GetDataTopic(type, control.ChargePoint.Identifier, false);
+        await PublishStringAsync(topic, control.Payload, false);
+    }
+
     public async Task ClearRetainFlag(Type type, string identifier, bool fromChargePoint)
     {
         var topic = MqttTopicService.GetDataTopic(type.Name, identifier, fromChargePoint);
@@ -405,8 +410,8 @@ public class OcppGatewayMqttService
                 Payload = payload
             });
         }
-        /*
-        if (MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeDataToGateway))
+
+        if (MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeDataToChargePoint))
         {
             OnDataToGatewayReceived(new DataReceivedEventArgs
             {
@@ -415,7 +420,7 @@ public class OcppGatewayMqttService
                 Payload = payload
             });
         }
-        */
+
 
     }
 
@@ -457,6 +462,9 @@ public class OcppGatewayMqttService
     {
         if (message == null)
             return;
+
+        message.Replace("\n", "");
+        message.Replace("\r", "");
 
         while (!mqttClient.IsConnected)
         {
