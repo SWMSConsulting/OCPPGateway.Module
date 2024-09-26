@@ -18,6 +18,8 @@ namespace OCPPGateway.Module.BusinessObjects;
 [DisplayName("Charge Point")]
 public abstract class OCPPChargePoint : AssetAdministrationShell
 {
+    public abstract OCPPProtocolVersion OCPPProtocolVersion { get; }
+
     public override string Caption => Name;
 
     [RuleRequiredField]
