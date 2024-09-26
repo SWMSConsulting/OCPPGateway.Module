@@ -27,6 +27,7 @@ public class DataReceivedEventArgs : EventArgs
 }
 public class OcppGatewayMqttService
 {
+    public static readonly string VendorId = "SWMS";
 
     // this should be overridden in the derived class, because this is project specific
     public virtual void OnDataTransferReceived(DataReceivedEventArgs args) { }
