@@ -10,6 +10,7 @@ using SWMS.Influx.Module.Attributes;
 using SWMS.Influx.Module.BusinessObjects;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OCPPGateway.Module.BusinessObjects;
@@ -23,6 +24,7 @@ public abstract class OCPPChargePoint : AssetAdministrationShell
     public override string Caption => Name;
 
     [RuleRequiredField]
+    [StringLength(20)]
     public virtual string Identifier { get; set; }
 
     [RuleRequiredField]
