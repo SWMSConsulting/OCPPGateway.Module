@@ -13,6 +13,6 @@ public class RemoteStartTransactionRequest
     public string idTag { get; set; }
 
 
-    [JsonProperty("chargingProfile", Required = Required.Default)]
+    [JsonProperty("chargingProfile", Required = Required.DisallowNull)]
     public ChargingProfile chargingProfile { get; set; }
 }
