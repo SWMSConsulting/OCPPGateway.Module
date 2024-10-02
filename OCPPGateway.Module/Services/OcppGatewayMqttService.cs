@@ -49,9 +49,13 @@ public class OcppGatewayMqttService
 
     public readonly IServiceScopeFactory _serviceScopeFactory;
 
+    public static JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings
+    {
+        NullValueHandling = NullValueHandling.Ignore
+    };
 
-    #region setup
-    public OcppGatewayMqttService(
+#region setup
+public OcppGatewayMqttService(
         ILogger<OcppGatewayMqttService> logger,
         IServiceScopeFactory serviceScopeFactory
     )
@@ -104,7 +108,7 @@ public class OcppGatewayMqttService
             idTag = "12345678"
         };
 
-        var payload = JsonConvert.SerializeObject(request);
+        var payload = Serialize(request);
         var chargePoint = connector.ChargePoint.Identifier;
         var topic = MqttTopicService.GetDataTopic("RemoteStartTransaction", chargePoint, false);
 
@@ -124,7 +128,7 @@ public class OcppGatewayMqttService
             transactionId = transaction.TransactionId
         };
 
-        var payload = JsonConvert.SerializeObject(request);
+        var payload = Serialize(request);
         var chargePoint = connector.ChargePoint.Identifier;
         var topic = MqttTopicService.GetDataTopic("RemoteStopTransaction", chargePoint, false);
 
@@ -337,20 +341,20 @@ public class OcppGatewayMqttService
     #region publish
     public async Task Publish(DataTransferRequest dataTransferRequest, string chargePointId)
     {
-        var payload = JsonConvert.SerializeObject(dataTransferRequest);
+        var payload = Serialize(dataTransferRequest);
         var topic = MqttTopicService.GetDataTopic("DataTransfer", chargePointId, false);
-        await PublishStringAsync(topic, payload, true);
+        await PublishStringAsync(topic, payload, false);
     }
     public async Task Publish(ChargePoint chargePoint)
     {
-        var payload = JsonConvert.SerializeObject(chargePoint);
+        var payload = Serialize(chargePoint);
         var topic = MqttTopicService.GetDataTopic(nameof(ChargePoint), chargePoint.ChargePointId, false);
         await PublishStringAsync(topic, payload, true);
     }
 
     public async Task Publish(ChargeTag chargeTag)
     {
-        var payload = JsonConvert.SerializeObject(chargeTag);
+        var payload = Serialize(chargeTag);
         var topic = MqttTopicService.GetDataTopic(nameof(ChargeTag), chargeTag.TagId, false);
         await PublishStringAsync(topic, payload, true);
     }
@@ -374,6 +378,11 @@ public class OcppGatewayMqttService
     #endregion
 
     #region MQTT related functions
+    private string Serialize(object obj)
+    {
+        return JsonConvert.SerializeObject(obj, JsonSerializerSettings);
+    }
+
     protected async void OnConfiguring()
     {
         await ConnectMqtt();
