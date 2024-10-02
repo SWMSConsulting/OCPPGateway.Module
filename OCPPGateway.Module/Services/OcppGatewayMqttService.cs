@@ -252,7 +252,7 @@ public OcppGatewayMqttService(
                 return;
             }
 
-            var existingTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId == transaction.TransactionId);
+            var existingTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId == transaction.TransactionId && !t.IsStopped);
             if (existingTransaction == null)
             {
                 existingTransaction = (OCPPTransaction)objectSpace.CreateObject(type);
