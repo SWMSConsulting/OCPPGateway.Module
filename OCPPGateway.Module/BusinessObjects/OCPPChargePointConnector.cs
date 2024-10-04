@@ -22,7 +22,10 @@ public abstract class OCPPChargePointConnector: AssetAdministrationShell
         {
             Identifier = ChargePoint.Connectors.Max(c => c.Identifier) + 1;
         }
+
+        ChargePoint?.Publish();
     }
+
     public virtual OCPPChargePoint ChargePoint { get; set; }
 
     [Appearance("IdentifierDisabled", Enabled = false)]

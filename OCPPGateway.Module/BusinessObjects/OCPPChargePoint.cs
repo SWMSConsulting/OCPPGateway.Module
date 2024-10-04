@@ -81,6 +81,7 @@ public abstract class OCPPChargePoint : AssetAdministrationShell
             {
                 ChargePointId = Identifier,
                 Name = Name,
+                NumberOfConnectors = NumberOfConnectors,
             };
         }
     }

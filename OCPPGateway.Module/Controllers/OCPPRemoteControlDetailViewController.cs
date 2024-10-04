@@ -75,7 +75,7 @@ public class OCPPRemoteControlDetailViewController : ObjectViewController<Detail
     private void MqttService_OnDataReceived(object? sender, DataReceivedEventArgs args)
     {
 
-        var control = View.CurrentObject as OCPPRemoteControl;
+        var control = View?.CurrentObject as OCPPRemoteControl;
         if (control == null)
         {
             return;
@@ -104,6 +104,6 @@ public class OCPPRemoteControlDetailViewController : ObjectViewController<Detail
         options.Duration = 4000;
         options.Message = message;
         options.Type = type;
-        Application.ShowViewStrategy.ShowMessage(options);
+        Application?.ShowViewStrategy.ShowMessage(options);
     }
 }
