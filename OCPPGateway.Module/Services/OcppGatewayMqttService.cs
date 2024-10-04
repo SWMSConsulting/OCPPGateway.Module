@@ -11,6 +11,7 @@ using OCPPGateway.Module.Messages_OCPP16;
 using System;
 using System.Text;
 using OCPPGateway.Module.NonPersistentObjects;
+using MQTTnet.Internal;
 
 namespace OCPPGateway.Module.Services;
 
@@ -339,6 +340,35 @@ public OcppGatewayMqttService(
     #endregion
 
     #region publish
+    public async Task PublishChargePoints()
+    {
+        using (var scope = _serviceScopeFactory.CreateScope())
+        {
+            var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
+            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace<OCPPChargePoint>();
+
+            var chargePoints = objectSpace.GetObjects<OCPPChargePoint>().ToList();
+            foreach (var chargePoint in chargePoints)
+            {
+                chargePoint?.Publish();
+            }
+        }
+    }
+
+    public async Task PublishChargeTags()
+    {
+        using (var scope = _serviceScopeFactory.CreateScope())
+        {
+            var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
+            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace<OCPPChargeTag>();
+
+            var chargeTags = objectSpace.GetObjects<OCPPChargeTag>().ToList();
+            foreach (var chargeTag in chargeTags)
+            {
+                chargeTag?.Publish();
+            }
+        }
+    }
     public async Task Publish(DataTransferRequest dataTransferRequest, string chargePointId)
     {
         var payload = Serialize(dataTransferRequest);
@@ -460,6 +490,10 @@ public OcppGatewayMqttService(
                 await mqttClient.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic(topic).Build());
             }
         }
+        
+        PublishChargePoints().RunInBackground();
+        PublishChargeTags().RunInBackground();
+
         _logger.LogInformation("SUBCRIPTIONS SUCCESSFULL");
     }
 
