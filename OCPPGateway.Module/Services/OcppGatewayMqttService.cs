@@ -161,6 +161,12 @@ public OcppGatewayMqttService(
             return;
         }
 
+        if (args.Type == nameof(ConnectorStatus))
+        {
+            HandleConnectorStatus(args.Payload);
+            return;
+        }
+
         if (args.Type == "DataTransfer")
         {
             OnDataTransferReceived(args);
@@ -269,6 +275,43 @@ public OcppGatewayMqttService(
             existingTransaction.StopMeter = transaction.MeterStop;
             existingTransaction.StopTagId = transaction.StopTagId ?? "";
             existingTransaction.StopReason = transaction.StopReason ?? "";
+
+            objectSpace.CommitChanges();
+        }
+    }
+
+    public void HandleConnectorStatus(string payload)
+    {
+        var status = JsonConvert.DeserializeObject<ConnectorStatus>(payload);
+        if (status == null)
+        {
+            _logger.LogError("Failed to deserialize ConnectorStatus");
+            return;
+        }
+
+        using (var scope = _serviceScopeFactory.CreateScope())
+        {
+            var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
+            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace<OCPPChargePointConnector>();
+
+            var chargePoint = objectSpace.FindObject<OCPPChargePoint>(CriteriaOperator.Parse("Identifier = ?", status.ChargePointId));
+            if (chargePoint == null)
+            {
+                _logger.LogError("ChargePoint not found: {ChargePointId}", [status.ChargePointId]);
+                return;
+            }
+
+            var connector = chargePoint.Connectors.FirstOrDefault(c => c.Identifier == status.ConnectorId);
+            if (connector == null)
+            {
+                _logger.LogError("Connector not found {ConnectorId} for {ChargePointId}", [status.ConnectorId, status.ChargePointId]);
+                return;
+            }
+
+            connector.LastStatus = status.LastStatus;
+            connector.LastConsumption = status.LastConsumption;
+            connector.LastMeter = status.LastMeter;
+            connector.LastStateOfCharge = status.StateOfCharge;
 
             objectSpace.CommitChanges();
         }
