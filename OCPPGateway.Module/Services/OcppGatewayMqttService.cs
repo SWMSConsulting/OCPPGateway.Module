@@ -32,6 +32,7 @@ public class OcppGatewayMqttService
 
     // this should be overridden in the derived class, because this is project specific
     public virtual void OnDataTransferReceived(DataReceivedEventArgs args) { }
+    public virtual void OnTransactionUpdated(OCPPTransaction transaction) { }
 
     public EventHandler<DataReceivedEventArgs> DataFromGatewayReceived;
     public EventHandler<DataReceivedEventArgs> DataToGatewayReceived;
@@ -233,51 +234,51 @@ public OcppGatewayMqttService(
             return;
         }
 
-        using (var scope = _serviceScopeFactory.CreateScope())
+        using var scope = _serviceScopeFactory.CreateScope();
+        var type = OCPPTransaction.AssignableType;
+        if (type == null)
         {
-            var type = OCPPTransaction.AssignableType;
-            if (type == null)
-            {
-                _logger.LogError("AssignableType not found");
-                return;
-            }
-
-            var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
-            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace(OCPPTransaction.AssignableType);
-
-            var chargePoint = objectSpace.FindObject<OCPPChargePoint>(CriteriaOperator.Parse("Identifier = ?", transaction.ChargePointId));
-            if (chargePoint == null)
-            {
-                _logger.LogError("ChargePoint not found");
-                return;
-            }
-
-            var connector = chargePoint.Connectors.FirstOrDefault(c => c.Identifier == transaction.ConnectorId);
-            if (connector == null)
-            {
-                _logger.LogError("Connector not found");
-                return;
-            }
-
-            var existingTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId == transaction.TransactionId && !t.IsStopped);
-            if (existingTransaction == null)
-            {
-                existingTransaction = (OCPPTransaction)objectSpace.CreateObject(type);
-                existingTransaction.TransactionId = transaction.TransactionId;
-                connector.Transactions.Add(existingTransaction);
-            }
-
-            existingTransaction.StartTime = transaction.StartTime;
-            existingTransaction.StartMeter = transaction.MeterStart;
-            existingTransaction.StartTagId = transaction.StartTagId ?? "";
-
-            existingTransaction.StopTime = transaction.StopTime;
-            existingTransaction.StopMeter = transaction.MeterStop;
-            existingTransaction.StopTagId = transaction.StopTagId ?? "";
-            existingTransaction.StopReason = transaction.StopReason ?? "";
-
-            objectSpace.CommitChanges();
+            _logger.LogError("AssignableType not found");
+            return;
         }
+
+        var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
+        var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace(OCPPTransaction.AssignableType);
+
+        var chargePoint = objectSpace.FindObject<OCPPChargePoint>(CriteriaOperator.Parse("Identifier = ?", transaction.ChargePointId));
+        if (chargePoint == null)
+        {
+            _logger.LogError("ChargePoint not found");
+            return;
+        }
+
+        var connector = chargePoint.Connectors.FirstOrDefault(c => c.Identifier == transaction.ConnectorId);
+        if (connector == null)
+        {
+            _logger.LogError("Connector not found");
+            return;
+        }
+
+        var existingTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId == transaction.TransactionId && !t.IsStopped);
+        if (existingTransaction == null)
+        {
+            existingTransaction = (OCPPTransaction)objectSpace.CreateObject(type);
+            existingTransaction.TransactionId = transaction.TransactionId;
+            connector.Transactions.Add(existingTransaction);
+        }
+
+        existingTransaction.StartTime = transaction.StartTime;
+        existingTransaction.StartMeter = transaction.MeterStart;
+        existingTransaction.StartTagId = transaction.StartTagId ?? "";
+
+        existingTransaction.StopTime = transaction.StopTime;
+        existingTransaction.StopMeter = transaction.MeterStop;
+        existingTransaction.StopTagId = transaction.StopTagId ?? "";
+        existingTransaction.StopReason = transaction.StopReason ?? "";
+
+        objectSpace.CommitChanges();
+
+        OnTransactionUpdated(existingTransaction);
     }
 
     public void HandleConnectorStatus(string payload)
