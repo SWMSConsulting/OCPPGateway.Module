@@ -40,7 +40,7 @@
                 return new Dictionary<string, string>
                 {
                     { "protocol", protocol },
-                    { "type", segments[1] },
+                    { "action", segments[1] },
                     { "identifier", segments[2] },
                     { "direction", segments[3] }
                 };
@@ -50,7 +50,7 @@
                 return new Dictionary<string, string>
                 {
                     { "protocol", protocol },
-                    { "clientId", segments[1] },
+                    { "identifier", segments[1] },
                     { "action", segments[2] },
                     { "direction", segments[3] }
                 };

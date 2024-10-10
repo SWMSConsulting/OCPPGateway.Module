@@ -20,22 +20,26 @@ public enum OCPPVersion
     OCPP16,
     OCPP20
 }
-public class DataReceivedEventArgs : EventArgs
+public class MessageReceivedEventArgs : EventArgs
 {
-    public string Type { get; set; }
+    public string Action { get; set; }
     public string Identifier { get; set; }
+    public bool FromChargePoint { get; set; }
     public string Payload { get; set; }
 }
+
 public class OcppGatewayMqttService
 {
     public static readonly string VendorId = "SWMS";
 
     // this should be overridden in the derived class, because this is project specific
-    public virtual void OnDataTransferReceived(DataReceivedEventArgs args) { }
+    public virtual void OnDataTransferReceived(MessageReceivedEventArgs args) { }
     public virtual void OnTransactionUpdated(OCPPTransaction transaction) { }
 
-    public EventHandler<DataReceivedEventArgs> DataFromGatewayReceived;
-    public EventHandler<DataReceivedEventArgs> DataToGatewayReceived;
+    public EventHandler<MessageReceivedEventArgs> DataFromGatewayReceived;
+    public EventHandler<MessageReceivedEventArgs> DataToGatewayReceived;
+
+    public EventHandler<MessageReceivedEventArgs> OCPPMessageReceived;
 
     private IMqttClient mqttClient;
     private MqttClientOptions options;
@@ -44,9 +48,17 @@ public class OcppGatewayMqttService
     private static string TopicSubscribeDataFromChargePoint => MqttTopicService.GetDataTopic("+", "+", true);
     private static string TopicSubscribeDataToChargePoint => MqttTopicService.GetDataTopic("+", "+", false);
 
+
+    private static string TopicSubscribeOcpp16FromChargePoint => MqttTopicService.GetOcppTopic(OCPPVersion.OCPP16, "+", "+", true);
+    private static string TopicSubscribeOcpp16ToChargePoint => MqttTopicService.GetOcppTopic(OCPPVersion.OCPP16, "+", "+", false);
+
+
     private string[] topicsToSubscribe => [
         TopicSubscribeDataFromChargePoint,
-        TopicSubscribeDataToChargePoint
+        TopicSubscribeDataToChargePoint,
+
+        TopicSubscribeOcpp16FromChargePoint,
+        TopicSubscribeOcpp16ToChargePoint
     ];
 
     public readonly IServiceScopeFactory _serviceScopeFactory;
@@ -140,35 +152,35 @@ public OcppGatewayMqttService(
     #endregion
 
     #region OnDataFromGatewayReceived
-    public async void OnDataFromGatewayReceived(DataReceivedEventArgs args)
+    public async void OnDataFromGatewayReceived(MessageReceivedEventArgs args)
     {
         DataFromGatewayReceived?.Invoke(this, args);
 
-        if (args.Type == nameof(UnknownChargePoint))
+        if (args.Action == nameof(UnknownChargePoint))
         {
             HandleUnknownChargePoint(args.Payload);
             return;
         }
 
-        if (args.Type == nameof(UnknownChargeTag))
+        if (args.Action == nameof(UnknownChargeTag))
         {
             HandleUnknownChargeTag(args.Payload);
             return;
         }
 
-        if (args.Type == nameof(Transaction))
+        if (args.Action == nameof(Transaction))
         {
             HandleTransaction(args.Payload);
             return;
         }
 
-        if (args.Type == nameof(ConnectorStatus))
+        if (args.Action == nameof(ConnectorStatus))
         {
             HandleConnectorStatus(args.Payload);
             return;
         }
 
-        if (args.Type == "DataTransfer")
+        if (args.Action == "DataTransfer")
         {
             OnDataTransferReceived(args);
             return;
@@ -320,7 +332,7 @@ public OcppGatewayMqttService(
     #endregion
 
     #region OnDataToGatewayReceived
-    public async void OnDataToGatewayReceived(DataReceivedEventArgs args)
+    public async void OnDataToGatewayReceived(MessageReceivedEventArgs args)
     {
         DataToGatewayReceived?.Invoke(this, args);
     }
@@ -484,28 +496,33 @@ public OcppGatewayMqttService(
         }
 
         var decodedTopic = MqttTopicService.DecodeTopic(arg.ApplicationMessage.Topic);
-        
-        if(MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeDataFromChargePoint))
+        var args = new MessageReceivedEventArgs
         {
-            OnDataFromGatewayReceived(new DataReceivedEventArgs
-            {
-                Type = decodedTopic["type"],
-                Identifier = decodedTopic["identifier"],
-                Payload = payload
-            });
+            Action = decodedTopic["action"],
+            Identifier = decodedTopic["identifier"],
+            FromChargePoint = decodedTopic["direction"] == "in",
+            Payload = payload
+        };
+
+        if (MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeDataFromChargePoint))
+        {
+            OnDataFromGatewayReceived(args);
         }
 
         if (MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeDataToChargePoint))
         {
-            OnDataToGatewayReceived(new DataReceivedEventArgs
-            {
-                Type = decodedTopic["type"],
-                Identifier = decodedTopic["identifier"],
-                Payload = payload
-            });
+            OnDataToGatewayReceived(args);
         }
 
+        if(MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeOcpp16FromChargePoint))
+        {
+            OCPPMessageReceived?.Invoke(this, args);
+        }
 
+        if (MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeOcpp16ToChargePoint))
+        {
+            OCPPMessageReceived?.Invoke(this, args);
+        }
     }
 
     private async Task MqttClient_DisconnectedAsync(MqttClientDisconnectedEventArgs arg)

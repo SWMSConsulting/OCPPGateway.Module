@@ -66,13 +66,13 @@ public class OCPPRemoteControlDetailViewController : ObjectViewController<Detail
         service?.Publish(control).RunInBackground();
     }
 
-    private void MqttService_OnDataSend(object? sender, DataReceivedEventArgs args)
+    private void MqttService_OnDataSend(object? sender, MessageReceivedEventArgs args)
     {
-        var message = $"{args.Type} send to {args.Identifier}";
+        var message = $"{args.Action} send to {args.Identifier}";
         Toast(message, InformationType.Info);
     }
 
-    private void MqttService_OnDataReceived(object? sender, DataReceivedEventArgs args)
+    private void MqttService_OnDataReceived(object? sender, MessageReceivedEventArgs args)
     {
 
         var control = View?.CurrentObject as OCPPRemoteControl;
@@ -84,14 +84,14 @@ public class OCPPRemoteControlDetailViewController : ObjectViewController<Detail
         var responseType = control.Request.ResponseType;
         try
         {
-            var message = $"{args.Type} received from {args.Identifier}: {args.Payload}";
+            var message = $"{args.Action} received from {args.Identifier}: {args.Payload}";
             Toast(message, InformationType.Success);
             var response = JsonConvert.DeserializeObject(args.Payload, responseType);
             control.Response = args.Payload;
         }
         catch (JsonException e)
         {
-            var message = $"Received invalid response for {args.Type} from {args.Identifier}";
+            var message = $"Received invalid response for {args.Action} from {args.Identifier}";
             Toast(message, InformationType.Warning);
             control.Response = "";
             return;

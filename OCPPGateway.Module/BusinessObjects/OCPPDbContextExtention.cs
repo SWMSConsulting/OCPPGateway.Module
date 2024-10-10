@@ -22,5 +22,7 @@ public static class OCPPDbContextExtention
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<OCPPChargePointConnector>();
+
+        modelBuilder.Entity<OCPPMessageCallbackLink>();
     }
 }
