@@ -4,6 +4,7 @@ using DevExpress.ExpressApp.Model;
 using DevExpress.Persistent.Base;
 using DevExpress.Persistent.Validation;
 using MQTTnet.Internal;
+using OCPPGateway.Module.BusinessObjects.Events;
 using OCPPGateway.Module.Models;
 using OCPPGateway.Module.Services;
 using SWMS.Influx.Module.Attributes;
@@ -32,6 +33,10 @@ public abstract class OCPPChargePoint : AssetAdministrationShell
 
     [Aggregated]
     public virtual IList<OCPPChargePointConnector> Connectors { get; set; } = new ObservableCollection<OCPPChargePointConnector>();
+
+    [Aggregated]
+    [Appearance("EventsDisabled", Enabled = false)]
+    public virtual IList<OCPPEvent> Events { get; set; } = new ObservableCollection<OCPPEvent>();
 
     [NotMapped]
     public int NumberOfConnectors => Connectors.Count;

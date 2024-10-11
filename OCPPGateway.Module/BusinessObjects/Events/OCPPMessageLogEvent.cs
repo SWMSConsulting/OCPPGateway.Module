@@ -2,8 +2,10 @@
 
 namespace OCPPGateway.Module.BusinessObjects.Events;
 
-public class OCPPMessageReceivedEvent : OCPPEvent
+public class OCPPMessageLogEvent : OCPPEvent
 {
+    public virtual string Protocol { get; set; }
+
     public virtual string MessageType { get; set; }
 
     public virtual string MessageId { get; set; }
@@ -15,7 +17,7 @@ public class OCPPMessageReceivedEvent : OCPPEvent
 
 
     #region OCPPEvent
-    public override string Category => "OCPPMessageReceived";
+    public override string Category => "OCPPMessageLog";
 
     public override string Description => $"Received {MessageAction} message of type {MessageType} for {ChargePoint.Identifier}";
     #endregion

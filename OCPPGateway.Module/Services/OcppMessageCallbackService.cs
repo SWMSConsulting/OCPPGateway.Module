@@ -52,7 +52,7 @@ public class OcppMessageCallbackService
                 .FirstOrDefault(t => t.Name == callbackLink.OCPP16Callback);
             if(implementingType != null) {
                 var messageCallback = Activator.CreateInstance(implementingType) as IMessageCallbackOCPP16;
-                messageCallback?.OnMessageReceived(args, objectSpace);
+                messageCallback?.OnMessageReceived(args, objectSpace, _logger);
             }
         });
 

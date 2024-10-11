@@ -1,7 +1,9 @@
-﻿using DevExpress.Persistent.BaseImpl.EF;
+﻿using DevExpress.Persistent.Base;
+using DevExpress.Persistent.BaseImpl.EF;
 
 namespace OCPPGateway.Module.BusinessObjects.Events;
 
+[NavigationItem("Events")]
 public abstract class OCPPEvent: BaseObject
 {
     public virtual OCPPChargePoint ChargePoint { get; set; }
