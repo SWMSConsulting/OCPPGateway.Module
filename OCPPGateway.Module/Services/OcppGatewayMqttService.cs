@@ -425,6 +425,12 @@ public OcppGatewayMqttService(
             }
         }
     }
+    public async Task Publish(SendLocalListRequest request, string chargePointId)
+    {
+        var payload = Serialize(request);
+        var topic = MqttTopicService.GetDataTopic("SendLocalList", chargePointId, false);
+        await PublishStringAsync(topic, payload, false);
+    }
     public async Task Publish(DataTransferRequest dataTransferRequest, string chargePointId)
     {
         var payload = Serialize(dataTransferRequest);

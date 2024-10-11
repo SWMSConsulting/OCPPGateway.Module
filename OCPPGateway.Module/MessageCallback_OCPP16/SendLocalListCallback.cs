@@ -1,6 +1,7 @@
 ﻿using DevExpress.ExpressApp;
 using Microsoft.Extensions.Logging;
 using OCPPGateway.Module.BusinessObjects;
+using OCPPGateway.Module.Extensions;
 using OCPPGateway.Module.Messages_OCPP16;
 using OCPPGateway.Module.Services;
 
@@ -8,9 +9,10 @@ namespace OCPPGateway.Module.OCPPMessageCallback;
 
 public class SendLocalListCallback : IMessageCallbackOCPP16
 {
-    public void OnMessageReceived(MessageReceivedEventArgs eventArgs, IObjectSpace objectSpace, ILogger logger)
+    public void OnMessageReceived(MessageReceivedEventArgs args, IObjectSpace objectSpace, ILogger logger)
     {
-        var chargeTags = objectSpace.GetObjects<OCPPChargeTag>();
+        var type = typeof(OCPPChargeTag).GetImplementingTypes().FirstOrDefault();
+        var chargeTags = objectSpace.GetObjects(type).Cast<OCPPChargeTag>().ToList();
 
         var localList = new SendLocalListRequest
         {
@@ -43,5 +45,8 @@ public class SendLocalListCallback : IMessageCallbackOCPP16
                 };
             }).ToList()
         };
+
+        var service = objectSpace.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
+        service?.Publish(localList, args.Identifier);
     }
 }
