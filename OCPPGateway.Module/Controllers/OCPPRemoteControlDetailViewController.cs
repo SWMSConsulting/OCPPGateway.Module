@@ -62,8 +62,15 @@ public class OCPPRemoteControlDetailViewController : ObjectViewController<Detail
             return;
         }
 
-        var service = ObjectSpace.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
-        service?.Publish(control).RunInBackground();
+        try
+        {
+            var service = ObjectSpace.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
+            service?.Publish(control).RunInBackground();
+        }
+        catch (Exception ex)
+        {
+            Toast(ex.Message, InformationType.Error);
+        }
     }
 
     private void MqttService_OnDataSend(object? sender, MessageReceivedEventArgs args)
@@ -81,7 +88,13 @@ public class OCPPRemoteControlDetailViewController : ObjectViewController<Detail
             return;
         }
 
-        var responseType = control.Request.ResponseType;
+        var responseType = control.Request?.ResponseType;
+        if(responseType == null)
+        {
+            Toast($"Unknown response type ({control.Request?.Name})", InformationType.Warning);
+            return;
+        }
+
         try
         {
             var message = $"{args.Action} received from {args.Identifier}: {args.Payload}";
