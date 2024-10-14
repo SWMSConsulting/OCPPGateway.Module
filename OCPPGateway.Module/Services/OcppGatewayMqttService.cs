@@ -12,6 +12,7 @@ using System;
 using System.Text;
 using OCPPGateway.Module.NonPersistentObjects;
 using MQTTnet.Internal;
+using DevExpress.ExpressApp;
 
 namespace OCPPGateway.Module.Services;
 
