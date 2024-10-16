@@ -62,36 +62,49 @@ public class OCPPRemoteControlDetailViewController : ObjectViewController<Detail
             return;
         }
 
-        var service = ObjectSpace.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
-        service?.Publish(control).RunInBackground();
+        try
+        {
+            var service = ObjectSpace.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
+            service?.Publish(control).RunInBackground();
+        }
+        catch (Exception ex)
+        {
+            Toast(ex.Message, InformationType.Error);
+        }
     }
 
-    private void MqttService_OnDataSend(object? sender, DataReceivedEventArgs args)
+    private void MqttService_OnDataSend(object? sender, MessageReceivedEventArgs args)
     {
-        var message = $"{args.Type} send to {args.Identifier}";
+        var message = $"{args.Action} send to {args.Identifier}";
         Toast(message, InformationType.Info);
     }
 
-    private void MqttService_OnDataReceived(object? sender, DataReceivedEventArgs args)
+    private void MqttService_OnDataReceived(object? sender, MessageReceivedEventArgs args)
     {
 
-        var control = View.CurrentObject as OCPPRemoteControl;
+        var control = View?.CurrentObject as OCPPRemoteControl;
         if (control == null)
         {
             return;
         }
 
-        var responseType = control.Request.ResponseType;
+        var responseType = control.Request?.ResponseType;
+        if(responseType == null)
+        {
+            Toast($"Unknown response type ({control.Request?.Name})", InformationType.Warning);
+            return;
+        }
+
         try
         {
-            var message = $"{args.Type} received from {args.Identifier}: {args.Payload}";
+            var message = $"{args.Action} received from {args.Identifier}: {args.Payload}";
             Toast(message, InformationType.Success);
             var response = JsonConvert.DeserializeObject(args.Payload, responseType);
             control.Response = args.Payload;
         }
         catch (JsonException e)
         {
-            var message = $"Received invalid response for {args.Type} from {args.Identifier}";
+            var message = $"Received invalid response for {args.Action} from {args.Identifier}";
             Toast(message, InformationType.Warning);
             control.Response = "";
             return;
@@ -104,6 +117,6 @@ public class OCPPRemoteControlDetailViewController : ObjectViewController<Detail
         options.Duration = 4000;
         options.Message = message;
         options.Type = type;
-        Application.ShowViewStrategy.ShowMessage(options);
+        Application?.ShowViewStrategy.ShowMessage(options);
     }
 }

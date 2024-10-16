@@ -1,4 +1,5 @@
 ﻿using DevExpress.ExpressApp.ConditionalAppearance;
+using DevExpress.ExpressApp.Model;
 using DevExpress.Persistent.Base;
 using MQTTnet.Internal;
 using OCPPGateway.Module.Services;
@@ -22,12 +23,22 @@ public abstract class OCPPChargePointConnector: AssetAdministrationShell
         {
             Identifier = ChargePoint.Connectors.Max(c => c.Identifier) + 1;
         }
+
+        ChargePoint?.Publish();
     }
+
     public virtual OCPPChargePoint ChargePoint { get; set; }
 
     [Appearance("IdentifierDisabled", Enabled = false)]
     public virtual int Identifier { get; set; }
     public virtual string Name { get; set; } = "";
+
+    public virtual string? LastStatus { get; set; }
+    public virtual double? LastConsumption { get; set; }
+    public virtual double? LastMeter { get; set; }
+
+    [ModelDefault("DisplayFormat", "{0:P0}")]
+    public virtual double? LastStateOfCharge { get; set; }
 
     public virtual IList<OCPPTransaction> Transactions { get; set; } = new ObservableCollection<OCPPTransaction>();
 

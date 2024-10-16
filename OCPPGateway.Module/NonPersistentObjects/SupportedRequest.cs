@@ -48,6 +48,18 @@ public class SupportedRequest: NonPersistentBaseObject
                     RequestType = typeof(DataTransferRequest),
                     ResponseType = typeof(DataTransferResponse)
                 },
+                new SupportedRequest
+                {
+                    Name = "SendLocalList",
+                    RequestType = typeof(SendLocalListRequest),
+                    ResponseType = typeof(SendLocalListResponse)
+                },
+                new SupportedRequest
+                {
+                    Name = "TriggerMessage",
+                    RequestType = typeof(TriggerMessageRequest),
+                    ResponseType = typeof(TriggerMessageResponse)
+                },
             ]; 
         }
     }

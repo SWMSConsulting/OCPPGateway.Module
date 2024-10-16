@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using OCPPGateway.Module.BusinessObjects.Events;
 using SWMS.Influx.Module.BusinessObjects;
 
 namespace OCPPGateway.Module.BusinessObjects;
@@ -22,5 +23,9 @@ public static class OCPPDbContextExtention
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<OCPPChargePointConnector>();
+
+        modelBuilder.Entity<OCPPMessageCallbackLink>();
+
+        modelBuilder.Entity<OCPPMessageLogEvent>();
     }
 }

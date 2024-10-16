@@ -5,6 +5,7 @@ using MQTTnet.Internal;
 using OCPPGateway.Module.Models;
 using OCPPGateway.Module.Services;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace OCPPGateway.Module.BusinessObjects;
 
@@ -28,6 +29,7 @@ public abstract class OCPPChargeTag : BaseObject
 
 
     [RuleRequiredField]
+    [StringLength(20)]
     public virtual string Identifier { get; set; }
 
     [RuleRequiredField]
