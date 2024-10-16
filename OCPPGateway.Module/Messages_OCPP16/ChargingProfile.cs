@@ -80,7 +80,7 @@ public enum RecurrencyKind
 public class ChargingProfileSchedule
 {
     [JsonProperty("duration", Required = Required.Default)]
-    public int Furation { get; set; }
+    public int Duration { get; set; }
 
 
     [JsonProperty("startSchedule", Required = Required.Default)]
