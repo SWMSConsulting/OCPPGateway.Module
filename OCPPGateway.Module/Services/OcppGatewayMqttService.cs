@@ -497,9 +497,14 @@ public OcppGatewayMqttService(
             Action = decodedTopic["action"],
             Identifier = decodedTopic["identifier"],
             FromChargePoint = decodedTopic["direction"] == "in",
-            Payload = payload,
-            CorrelationData = Encoding.ASCII.GetString(arg.ApplicationMessage.CorrelationData)
+            Payload = payload
         };
+
+        var correlationData = arg.ApplicationMessage.CorrelationData;
+        if (correlationData != null && correlationData.Count() > 0)
+        {
+            args.CorrelationData = Encoding.ASCII.GetString(correlationData);
+        }
 
         if (MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeDataFromChargePoint))
         {
@@ -577,7 +582,7 @@ public OcppGatewayMqttService(
             PayloadSegment = Encoding.ASCII.GetBytes(message),
             QualityOfServiceLevel = MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce,
             Retain = retain,
-            CorrelationData = Encoding.ASCII.GetBytes(correlationData)
+            CorrelationData = !string.IsNullOrEmpty(correlationData) ? Encoding.ASCII.GetBytes(correlationData) : []
         };
 
         await mqttClient.PublishAsync(mqttMessage);
