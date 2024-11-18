@@ -59,11 +59,5 @@ public abstract class OCPPChargeTag : BaseObject
             };
         }
     }
-
-    public void Publish()
-    {
-        var service = ObjectSpace.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
-        service?.Publish(ChargeTag).RunInBackground();
-    }
     #endregion
 }
