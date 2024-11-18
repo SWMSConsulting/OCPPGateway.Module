@@ -442,14 +442,14 @@ public OcppGatewayMqttService(
     {
         var payload = Serialize(chargePoint);
         var topic = MqttTopicService.GetDataTopic(nameof(ChargePoint), chargePoint.ChargePointId, false);
-        await PublishStringAsync(topic, payload, true);
+        await PublishStringAsync(topic, payload, false);
     }
 
     public async Task Publish(ChargeTag chargeTag)
     {
         var payload = Serialize(chargeTag);
         var topic = MqttTopicService.GetDataTopic(nameof(ChargeTag), chargeTag.TagId, false);
-        await PublishStringAsync(topic, payload, true);
+        await PublishStringAsync(topic, payload, false);
     }
 
     public async Task Publish(OCPPRemoteControl control)
