@@ -25,6 +25,7 @@ public class MessageReceivedEventArgs : EventArgs
     public string Identifier { get; set; }
     public bool FromChargePoint { get; set; }
     public string Payload { get; set; }
+    public string CorrelationData { get; set; }
 }
 
 public class OcppGatewayMqttService
@@ -187,13 +188,13 @@ public OcppGatewayMqttService(
 
         if (args.Action == nameof(ChargePoint))
         {
-            await HandleChargePoint(args.Identifier);
+            await HandleChargePoint(args.Identifier, args.CorrelationData);
             return;
         }
 
         if (args.Action == nameof(ChargeTag))
         {
-            await HandleChargeTag(args.Identifier);
+            await HandleChargeTag(args.Identifier, args.CorrelationData);
             return;
         }
     }
@@ -341,7 +342,7 @@ public OcppGatewayMqttService(
         }
     }
     
-    public async Task HandleChargePoint(string identifier)
+    public async Task HandleChargePoint(string identifier, string correlationData)
     {
         if (string.IsNullOrEmpty(identifier))
         {
@@ -358,7 +359,7 @@ public OcppGatewayMqttService(
 
             if(chargePoints != null)
             {
-                await Publish(chargePoints);
+                await Publish(chargePoints, correlationData);
             }
             return;
         }
@@ -366,11 +367,11 @@ public OcppGatewayMqttService(
         var chargePoint = objectSpace?.FindObject<OCPPChargePoint>(CriteriaOperator.Parse("Identifier = ?", identifier));
         if (chargePoint != null)
         {
-            await Publish(chargePoint.ChargePoint);
+            await Publish(chargePoint.ChargePoint, correlationData);
         }
     }
     
-    public async Task HandleChargeTag(string identifier)
+    public async Task HandleChargeTag(string identifier, string correlationData)
     {
         if (string.IsNullOrEmpty(identifier))
         {
@@ -387,7 +388,7 @@ public OcppGatewayMqttService(
 
             if (chargeTags != null)
             {
-                await Publish(chargeTags);
+                await Publish(chargeTags, correlationData);
             }
             return;
         }
@@ -395,7 +396,7 @@ public OcppGatewayMqttService(
         var chargeTag = objectSpace?.FindObject<OCPPChargeTag>(CriteriaOperator.Parse("Identifier = ?", identifier));
         if (chargeTag != null)
         {
-            await Publish(chargeTag.ChargeTag);
+            await Publish(chargeTag.ChargeTag, correlationData);
         }
     }
     #endregion
@@ -405,64 +406,6 @@ public OcppGatewayMqttService(
     {
         DataToGatewayReceived?.Invoke(this, args);
     }
-
-    /*
-    public void HandleChargePoint(string payload)
-    {
-        var chargePoint = JsonConvert.DeserializeObject<ChargePoint>(payload);
-        if (chargePoint == null)
-        {
-            _logger.LogError("Failed to deserialize ChargePoint");
-            return;
-        }
-
-        using (var scope = _serviceScopeFactory.CreateScope())
-        {
-            var objectSpaceFactory = scope.ServiceProvider.GetService<INonSecuredObjectSpaceFactory>();
-            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace<OCPPChargePoint>();
-
-            var existing = objectSpace.FindObject<OCPPChargePoint>(CriteriaOperator.Parse("Identifier = ?", chargePoint.ChargePointId));
-            if (existing == null)
-            {
-                existing = (OCPPChargePoint)objectSpace.CreateObject(OCPPChargePoint.AssignableType);
-                existing.Identifier = chargePoint.ChargePointId;
-                existing.Name = chargePoint.Name;
-            }
-
-            objectSpace.CommitChanges();
-        }
-    }
-
-    public void HandleChargeTag(string payload)
-    {
-        var chargeTag = JsonConvert.DeserializeObject<ChargeTag>(payload);
-        if (chargeTag == null)
-        {
-            _logger.LogError("Failed to deserialize ChargeTag");
-            return;
-        }
-
-        using (var scope = _serviceScopeFactory.CreateScope())
-        {
-            var type = OCPPChargeTag.AssignableType;
-
-            var objectSpaceFactory = scope.ServiceProvider.GetRequiredService<INonSecuredObjectSpaceFactory>();
-            var objectSpace = objectSpaceFactory.CreateNonSecuredObjectSpace(type);
-
-            OCPPChargeTag? existing = objectSpace.FindObject(type, CriteriaOperator.Parse("Identifier = ?", chargeTag.TagId)) as OCPPChargeTag;
-            if (existing == null)
-            {
-                existing = (OCPPChargeTag)objectSpace.CreateObject(type);
-                existing.Identifier = chargeTag.TagId;
-                existing.Name = chargeTag.TagName;
-                existing.ExpiryDate = chargeTag.ExpiryDate;
-                existing.Blocked = chargeTag.Blocked ?? false;
-            }
-
-            objectSpace.CommitChanges();
-        }
-    }
-    */
     #endregion
 
     #region publish
@@ -478,30 +421,30 @@ public OcppGatewayMqttService(
         var topic = MqttTopicService.GetDataTopic("DataTransfer", chargePointId, false);
         await PublishStringAsync(topic, payload, false);
     }
-    public async Task Publish(ChargePoint chargePoint)
+    public async Task Publish(ChargePoint chargePoint, string correlationData)
     {
         var payload = Serialize(chargePoint);
         var topic = MqttTopicService.GetDataTopic(nameof(ChargePoint), chargePoint.ChargePointId, false);
-        await PublishStringAsync(topic, payload, false);
+        await PublishStringAsync(topic, payload, false, correlationData);
     }
-    public async Task Publish(List<ChargePoint> chargePoints)
+    public async Task Publish(List<ChargePoint> chargePoints, string correlationData)
     {
         var payload = Serialize(chargePoints);
         var topic = MqttTopicService.GetDataTopic(nameof(ChargePoint), "all", false);
-        await PublishStringAsync(topic, payload, false);
+        await PublishStringAsync(topic, payload, false, correlationData);
     }
 
-    public async Task Publish(ChargeTag chargeTag)
+    public async Task Publish(ChargeTag chargeTag, string correlationData)
     {
         var payload = Serialize(chargeTag);
         var topic = MqttTopicService.GetDataTopic(nameof(ChargeTag), chargeTag.TagId, false);
-        await PublishStringAsync(topic, payload, false);
+        await PublishStringAsync(topic, payload, false, correlationData);
     }
-    public async Task Publish(List<ChargeTag> chargeTags)
+    public async Task Publish(List<ChargeTag> chargeTags, string correlationData)
     {
         var payload = Serialize(chargeTags);
         var topic = MqttTopicService.GetDataTopic(nameof(ChargeTag), "all", false);
-        await PublishStringAsync(topic, payload, false);
+        await PublishStringAsync(topic, payload, false, correlationData);
     }
 
     public async Task Publish(OCPPRemoteControl control)
@@ -554,7 +497,8 @@ public OcppGatewayMqttService(
             Action = decodedTopic["action"],
             Identifier = decodedTopic["identifier"],
             FromChargePoint = decodedTopic["direction"] == "in",
-            Payload = payload
+            Payload = payload,
+            CorrelationData = Encoding.ASCII.GetString(arg.ApplicationMessage.CorrelationData)
         };
 
         if (MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeDataFromChargePoint))
