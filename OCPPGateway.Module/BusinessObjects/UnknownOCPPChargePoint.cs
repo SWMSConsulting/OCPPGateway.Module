@@ -33,11 +33,7 @@ public class UnknownOCPPChargePoint: BaseObject
             existingChargePoint.Name = Identifier;
         }
 
-        var service = ObjectSpace.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
-        service?.ClearRetainFlag(typeof(UnknownChargePoint), Identifier, true).RunInBackground();
-
-        ObjectSpace.Delete(this);
-        
+        ObjectSpace.Delete(this);        
         ObjectSpace.CommitChanges();
     }
 }

@@ -13,21 +13,6 @@ namespace OCPPGateway.Module.BusinessObjects;
 [DisplayName("Charge Tag")]
 public abstract class OCPPChargeTag : BaseObject
 {
-    public override void OnSaving()
-    {
-        base.OnSaving();
-
-        if(ObjectSpace.IsDeletedObject(this))
-        {
-            var service = ObjectSpace.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
-            service?.ClearRetainFlag(typeof(ChargePoint), Identifier, false).RunInBackground();
-        } else
-        {
-            Publish();
-        }
-    }
-
-
     [RuleRequiredField]
     [StringLength(20)]
     public virtual string Identifier { get; set; }
