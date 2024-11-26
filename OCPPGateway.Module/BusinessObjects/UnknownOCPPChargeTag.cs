@@ -35,11 +35,7 @@ public class UnknownOCPPChargeTag: BaseObject
             existingChargeTag.Blocked = true;
         }
 
-        var service = ObjectSpace.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
-        service?.ClearRetainFlag(typeof(UnknownChargeTag), Identifier, true).RunInBackground();
-
         ObjectSpace.Delete(this);
-
         ObjectSpace.CommitChanges();
     }
 }
