@@ -47,20 +47,6 @@ public abstract class OCPPChargePoint : AssetAdministrationShell
     [ModelDefault("DisplayFormat", "{0:dd.MM.yyyy HH:mm:ss}")]
     public DateTime? LastHeartbeat { get; set; }
 
-    public override void OnSaving()
-    {
-        base.OnSaving();
-
-        if (ObjectSpace.IsDeletedObject(this))
-        {
-            var service = ObjectSpace.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
-            service?.ClearRetainFlag(typeof(ChargePoint), Identifier, false).RunInBackground();
-        }
-        else
-        {
-            Publish();
-        }
-    }
 
     #region OCPP related
 
@@ -89,12 +75,6 @@ public abstract class OCPPChargePoint : AssetAdministrationShell
                 NumberOfConnectors = NumberOfConnectors,
             };
         }
-    }
-
-    public void Publish()
-    {
-        var service = ObjectSpace.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
-        service?.Publish(ChargePoint).RunInBackground();
     }
     #endregion
 }

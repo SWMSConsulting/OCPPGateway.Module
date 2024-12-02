@@ -92,7 +92,7 @@ public class OnlineConnectorStatus
 
 public enum ConnectorStatusEnum
 {
-    [System.Runtime.Serialization.EnumMember(Value = @"")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Undefined")]
     Undefined = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"Available")]
