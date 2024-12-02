@@ -3,6 +3,7 @@
     public static class MqttTopicService
     {
         private static string baseTopic = Environment.GetEnvironmentVariable("MQTT_BASE_TOPIC") ?? "";
+        public static string BaseTopic { get { return baseTopic; } }
 
         public static string GetOcppTopic(OCPPVersion protocol, string clientId, string action, bool fromChargePoint)
         {
