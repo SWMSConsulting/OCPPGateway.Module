@@ -2,6 +2,7 @@
 using DevExpress.ExpressApp.Model;
 using DevExpress.Persistent.Base;
 using DevExpress.Persistent.BaseImpl.EF;
+using OCPPGateway.Module.Models;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -58,6 +59,25 @@ public abstract class OCPPTransaction: BaseObject
                 .Where(t => t != type && type.IsAssignableFrom(t))
                 .FirstOrDefault();
         }
+    }
+
+    public Transaction ToTransaction()
+    {
+        return new Transaction
+        {
+            TransactionId = TransactionId,
+            ChargePointId = ChargePointConnector.ChargePoint.Identifier,
+            ConnectorId = ChargePointConnector.Identifier,
+
+            StartTime = StartTime,
+            MeterStart = StartMeter,
+            StartTagId = StartTagId,
+
+            StopTime = StopTime,
+            MeterStop = StopMeter,
+            StopTagId = StopTagId,
+            StopReason = StopReason,
+        };
     }
 
 }

@@ -4,7 +4,7 @@ namespace OCPPGateway.Module.Models;
 
 public partial class Transaction
 {
-    public int TransactionId { get; set; }
+    public int? TransactionId { get; set; }
     public string Uid { get; set; }
     public string ChargePointId { get; set; }
     public int ConnectorId { get; set; }

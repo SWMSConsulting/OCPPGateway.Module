@@ -11,6 +11,7 @@ using System.Text;
 using OCPPGateway.Module.NonPersistentObjects;
 using DevExpress.ExpressApp;
 using MQTTnet.Internal;
+using DevExpress.ExpressApp.Security;
 
 namespace OCPPGateway.Module.Services;
 
@@ -170,7 +171,7 @@ public OcppGatewayMqttService(
 
         if (args.Action == nameof(Transaction))
         {
-            HandleTransaction(args.Payload);
+            await HandleTransaction(args.Payload, args.CorrelationData);
             return;
         }
 
@@ -249,7 +250,7 @@ public OcppGatewayMqttService(
         }
     }
 
-    public void HandleTransaction(string payload)
+    public async Task HandleTransaction(string payload, string correlationData)
     {
         var transaction = JsonConvert.DeserializeObject<Transaction>(payload);
         if (transaction == null)
@@ -276,6 +277,24 @@ public OcppGatewayMqttService(
             return;
         }
 
+
+        // requesting transactions
+        if (transaction.TransactionId == null)
+        {
+            List<Transaction> openTransactions = chargePoint.Connectors
+                .SelectMany(c => c.Transactions)
+                .Where(t => !t.IsStopped)
+                .Select(c => c.ToTransaction())
+                .ToList() ?? [];
+            if(transaction.ConnectorId > 0)
+            {
+                openTransactions = openTransactions.Where(t => t.ConnectorId == transaction.ConnectorId).ToList();
+            }
+
+            await Publish(openTransactions, transaction.ChargePointId, correlationData);
+            return;
+        }
+
         var connector = chargePoint.Connectors.FirstOrDefault(c => c.Identifier == transaction.ConnectorId);
         if (connector == null)
         {
@@ -287,7 +306,7 @@ public OcppGatewayMqttService(
         if (existingTransaction == null)
         {
             existingTransaction = (OCPPTransaction)objectSpace.CreateObject(type);
-            existingTransaction.TransactionId = transaction.TransactionId;
+            existingTransaction.TransactionId = transaction.TransactionId ?? 0;
             connector.Transactions.Add(existingTransaction);
         }
 
@@ -473,6 +492,13 @@ public OcppGatewayMqttService(
         string type = control.Request.Name;
         var topic = MqttTopicService.GetDataTopic(type, control.ChargePoint.Identifier, false);
         await PublishStringAsync(topic, control.Payload, false);
+    }
+
+    public async Task Publish(List<Transaction> transactions, string identifier, string correlationData)
+    {
+        var payload = Serialize(transactions);
+        var topic = MqttTopicService.GetDataTopic(nameof(Transaction), identifier, false);
+        await PublishStringAsync(topic, payload, false, correlationData);
     }
     #endregion
 
