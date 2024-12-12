@@ -47,6 +47,9 @@ public abstract class OCPPChargePointConnector: AssetAdministrationShell
     public bool IsInUse => ActiveTransaction != null;
 
     [NotMapped]
+    public bool IsOffline => LastStatus == "Undefined";
+
+    [NotMapped]
     public string? ConnectedRfid => ActiveTransaction?.StartTag?.Identifier;
 
     [NotMapped]

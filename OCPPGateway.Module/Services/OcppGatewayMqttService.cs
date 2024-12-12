@@ -36,6 +36,7 @@ public class OcppGatewayMqttService
     // this should be overridden in the derived class, because this is project specific
     public virtual void OnDataTransferReceived(MessageReceivedEventArgs args) { }
     public virtual void OnTransactionUpdated(OCPPTransaction transaction) { }
+    public virtual void OnChargePointConnectorUpdated(OCPPChargePointConnector connector) { }
 
     public EventHandler<MessageReceivedEventArgs> DataFromGatewayReceived;
     public EventHandler<MessageReceivedEventArgs> DataToGatewayReceived;
@@ -358,6 +359,8 @@ public OcppGatewayMqttService(
             connector.LastStateOfCharge = status.StateOfCharge;
 
             objectSpace.CommitChanges();
+
+            OnChargePointConnectorUpdated(connector);
         }
     }
     
