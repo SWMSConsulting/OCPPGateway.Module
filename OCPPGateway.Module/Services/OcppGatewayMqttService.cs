@@ -303,6 +303,15 @@ public OcppGatewayMqttService(
             return;
         }
 
+        var unstoppedTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId != transaction.TransactionId && !t.IsStopped);
+        if (unstoppedTransaction != null)
+        {
+            unstoppedTransaction.StopMeter = transaction.MeterStart;
+            unstoppedTransaction.StopTime = transaction.StartTime;
+            unstoppedTransaction.StopTagId = unstoppedTransaction.StartTagId ?? "";
+            unstoppedTransaction.StopReason = "Error: Another transaction started";
+        }
+
         var existingTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId == transaction.TransactionId && !t.IsStopped);
         if (existingTransaction == null)
         {

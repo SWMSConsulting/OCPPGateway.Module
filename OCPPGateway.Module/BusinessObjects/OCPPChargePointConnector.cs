@@ -1,6 +1,7 @@
 ﻿using DevExpress.ExpressApp.ConditionalAppearance;
 using DevExpress.ExpressApp.Model;
 using DevExpress.Persistent.Base;
+using DevExpress.Persistent.Validation;
 using MQTTnet.Internal;
 using OCPPGateway.Module.Services;
 using SWMS.Influx.Module.BusinessObjects;
@@ -29,6 +30,8 @@ public abstract class OCPPChargePointConnector: AssetAdministrationShell
 
     [Appearance("IdentifierDisabled", Enabled = false)]
     public virtual int Identifier { get; set; }
+
+    [RuleRequiredField]
     public virtual string Name { get; set; } = "";
 
     public virtual string? LastStatus { get; set; }
