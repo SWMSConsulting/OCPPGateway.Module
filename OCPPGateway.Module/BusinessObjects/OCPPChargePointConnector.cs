@@ -28,7 +28,6 @@ public abstract class OCPPChargePointConnector: AssetAdministrationShell
 
     public virtual OCPPChargePoint ChargePoint { get; set; }
 
-    [Appearance("IdentifierDisabled", Enabled = false)]
     public virtual int Identifier { get; set; }
 
     [RuleRequiredField]

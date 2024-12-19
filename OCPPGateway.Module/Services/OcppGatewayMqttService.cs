@@ -246,6 +246,7 @@ public OcppGatewayMqttService(
                 existing = objectSpace.CreateObject<UnknownOCPPChargeTag>();
                 existing.Identifier = chargeTag.TagId;
             }
+            existing.Timestamp = DateTime.Now;
 
             objectSpace.CommitChanges();
         }
@@ -303,13 +304,13 @@ public OcppGatewayMqttService(
             return;
         }
 
-        var unstoppedTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId != transaction.TransactionId && !t.IsStopped);
+        var unstoppedTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId != transaction.TransactionId && !t.IsStopped && t.StartTime < transaction.StartTime);
         if (unstoppedTransaction != null)
         {
             unstoppedTransaction.StopMeter = transaction.MeterStart;
             unstoppedTransaction.StopTime = transaction.StartTime;
             unstoppedTransaction.StopTagId = unstoppedTransaction.StartTagId ?? "";
-            unstoppedTransaction.StopReason = "Error: Another transaction started";
+            unstoppedTransaction.StopReason = "Another transaction started";
         }
 
         var existingTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId == transaction.TransactionId && !t.IsStopped);

@@ -1,9 +1,6 @@
 ﻿using DevExpress.Data.Filtering;
 using DevExpress.Persistent.Base;
 using DevExpress.Persistent.BaseImpl.EF;
-using MQTTnet.Internal;
-using OCPPGateway.Module.Models;
-using OCPPGateway.Module.Services;
 using System.ComponentModel;
 
 namespace OCPPGateway.Module.BusinessObjects;
@@ -14,6 +11,7 @@ public class UnknownOCPPChargeTag: BaseObject
 {
     public virtual string Identifier { get; set; }
 
+    public virtual DateTime Timestamp { get; set; }
 
 
     [Action(Caption = "Add to Charge Tags")]
