@@ -15,9 +15,9 @@ public class OCPPRemoteControlDetailViewController : ObjectViewController<Detail
     public OCPPRemoteControlDetailViewController()
     {
         TargetObjectType = typeof(OCPPRemoteControl);
-        SimpleAction action = new SimpleAction(this, "RemoteControlSendAction", DevExpress.Persistent.Base.PredefinedCategory.View)
+        SimpleAction action = new SimpleAction(this, "RemoteControlSendAction", "RemoteControlSend")
         {
-            Caption = "Send",
+            Caption = "Start",
             ImageName = "Actions_Send",
         };
         action.Execute += RemoteControlSendAction_Execute;

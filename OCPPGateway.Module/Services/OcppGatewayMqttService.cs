@@ -110,7 +110,7 @@ public OcppGatewayMqttService(
     #endregion
 
     #region RemoteControl
-    public async Task RemoteStartTransaction(OCPPChargePointConnector connector)
+    public async Task RemoteStartTransaction(OCPPChargePointConnector connector, OCPPChargeTag chargeTag)
     {
         var transaction = connector.ActiveTransaction;
         if (transaction != null)
@@ -121,7 +121,7 @@ public OcppGatewayMqttService(
         var request = new RemoteStartTransactionRequest
         {
             connectorId = connector.Identifier,
-            idTag = "12345678"
+            idTag = chargeTag.Identifier
         };
 
         var payload = Serialize(request);
