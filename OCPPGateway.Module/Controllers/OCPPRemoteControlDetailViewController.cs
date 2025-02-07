@@ -4,6 +4,7 @@ using OCPPGateway.Module.NonPersistentObjects;
 using OCPPGateway.Module.Services;
 using MQTTnet.Internal;
 using Newtonsoft.Json;
+using DevExpress.Persistent.Base;
 
 namespace OCPPGateway.Module.Controllers;
 
@@ -15,9 +16,9 @@ public class OCPPRemoteControlDetailViewController : ObjectViewController<Detail
     public OCPPRemoteControlDetailViewController()
     {
         TargetObjectType = typeof(OCPPRemoteControl);
-        SimpleAction action = new SimpleAction(this, "RemoteControlSendAction", "RemoteControlSend")
+        SimpleAction action = new SimpleAction(this, "RemoteControlSendAction", PredefinedCategory.View)
         {
-            Caption = "Start",
+            Caption = "Send",
             ImageName = "Actions_Send",
         };
         action.Execute += RemoteControlSendAction_Execute;
