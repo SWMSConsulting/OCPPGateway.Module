@@ -1,10 +1,6 @@
-﻿using DevExpress.ExpressApp.ConditionalAppearance;
-using DevExpress.ExpressApp.Model;
+﻿using DevExpress.ExpressApp.Model;
 using DevExpress.Persistent.Base;
 using DevExpress.Persistent.Validation;
-using MQTTnet.Internal;
-using OCPPGateway.Module.NonPersistentObjects;
-using OCPPGateway.Module.Services;
 using SWMS.Influx.Module.BusinessObjects;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -26,6 +22,10 @@ public abstract class OCPPChargePointConnector: AssetAdministrationShell
             Identifier = ChargePoint.Connectors.Max(c => c.Identifier) + 1;
         }
     }
+
+    public abstract bool RemoteStartTransactionSupported { get; }
+    
+    public abstract bool RemoteStopTransactionSupported { get; }    
 
     public virtual OCPPChargePoint ChargePoint { get; set; }
 
