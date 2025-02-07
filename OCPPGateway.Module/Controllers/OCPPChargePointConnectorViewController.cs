@@ -11,6 +11,8 @@ namespace OCPPGateway.Module.Controllers;
 
 public class OCPPChargePointConnectorViewController : ObjectViewController<ObjectView, OCPPChargePointConnector>
 {
+    OCPPRemoteStartTransactionControl? RemoteControl = null;
+
     public OCPPChargePointConnectorViewController()
     {
         PopupWindowShowAction showPopUpAction = new PopupWindowShowAction(this, "Start Transaction", "View"){
@@ -20,48 +22,40 @@ public class OCPPChargePointConnectorViewController : ObjectViewController<Objec
         };
         showPopUpAction.CustomizePopupWindowParams += showPopUpAction_CustomizePopupWindowParams;
 
-        SimpleAction startTransactionAction = new SimpleAction(this, "StartTransactionAction", "StartTransaction")
-        {
-            Caption = "Start Transaction",
-            ImageName = "",
-        };
-        startTransactionAction.Execute += StartTransactionAction_Execute;
-
         SimpleAction stopTransactionAction = new SimpleAction(this, "StopTransactionAction", PredefinedCategory.View)
         {
             Caption = "Stop Transaction",
             ImageName = "Stop",
+            ConfirmationMessage = "Do you really want to stop the transaction?",
             TargetObjectsCriteria = "RemoteStopTransactionSupported",
             SelectionDependencyType = SelectionDependencyType.RequireSingleObject
         };
         stopTransactionAction.Execute += StopTransactionAction_Execute;
-
     }
 
     public void showPopUpAction_CustomizePopupWindowParams(object sender, CustomizePopupWindowParamsEventArgs e)
     {
         var nonPersistentOS = Application.CreateObjectSpace(typeof(OCPPRemoteStartTransactionControl));
-        OCPPRemoteStartTransactionControl remoteControl = nonPersistentOS.CreateObject<OCPPRemoteStartTransactionControl>();
-        remoteControl.ChargePointConnector = ViewCurrentObject;
+        RemoteControl = nonPersistentOS.CreateObject<OCPPRemoteStartTransactionControl>();
+        RemoteControl.ChargePointConnector = ViewCurrentObject;
 
         nonPersistentOS.CommitChanges();
-        DetailView detailView = Application.CreateDetailView(nonPersistentOS, remoteControl);
+        DetailView detailView = Application.CreateDetailView(nonPersistentOS, RemoteControl);
         detailView.ViewEditMode = DevExpress.ExpressApp.Editors.ViewEditMode.Edit;
         e.View = detailView;
         e.DialogController.SaveOnAccept = false;
-        e.DialogController.CancelAction.Active["NothingToCancel"] = false;
+        e.DialogController.AcceptAction.Caption = "Start Transaction";
+        e.DialogController.AcceptAction.Execute += StartTransactionAction_Execute;
     }
-
 
     public void StartTransactionAction_Execute(object sender, SimpleActionExecuteEventArgs e)
     {
-        var remoteControl = View.CurrentObject as OCPPRemoteStartTransactionControl;
-        if (remoteControl == null)
+        if(RemoteControl == null)
         {
             return;
         }
 
-        if (remoteControl.ChargePointConnector == null || remoteControl.ChargeTag == null)
+        if (RemoteControl.ChargePointConnector == null || RemoteControl.ChargeTag == null)
         {
             var errorMessage = "Please select a valid Connector and Charge Tag";
             Application.ShowViewStrategy.ShowMessage(errorMessage, InformationType.Error);
@@ -69,11 +63,10 @@ public class OCPPChargePointConnectorViewController : ObjectViewController<Objec
         }
 
         var service = Application.ServiceProvider.GetService(typeof(OcppGatewayMqttService)) as OcppGatewayMqttService;
-        service?.RemoteStartTransaction(remoteControl.ChargePointConnector, remoteControl.ChargeTag).RunInBackground();
+        service?.RemoteStartTransaction(RemoteControl.ChargePointConnector, RemoteControl.ChargeTag).RunInBackground();
 
         var message = "Sending Remote Start Transaction";
         Application.ShowViewStrategy.ShowMessage(message, InformationType.Info);
-
     }
 
     public void StopTransactionAction_Execute(object sender, SimpleActionExecuteEventArgs e)
