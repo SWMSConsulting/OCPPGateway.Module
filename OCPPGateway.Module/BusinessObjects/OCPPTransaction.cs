@@ -8,7 +8,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.Serialization;
 
 namespace OCPPGateway.Module.BusinessObjects;
-
+ 
 [NavigationItem("OCPP")]
 public abstract class OCPPTransaction: BaseObject
 {
