@@ -8,11 +8,11 @@ using System;
 
 namespace OCPPGateway.Module.Controllers;
 
-public class UnknownOCPPChargeTagViewController : ObjectViewController<ObjectView, UnknownOCPPChargeTag>
+public class UnknownOCPPChargePointViewController : ObjectViewController<ObjectView, UnknownOCPPChargePoint>
 {
-    public UnknownOCPPChargeTagViewController()
+    public UnknownOCPPChargePointViewController()
     {
-        PopupWindowShowAction showPopUpAction = new PopupWindowShowAction(this, "Add to Charge Tags", "View")
+        PopupWindowShowAction showPopUpAction = new PopupWindowShowAction(this, "Add to Charge Points", "View")
         {
             ImageName = "Actions_Add",
             SelectionDependencyType = SelectionDependencyType.RequireSingleObject
@@ -21,12 +21,13 @@ public class UnknownOCPPChargeTagViewController : ObjectViewController<ObjectVie
     }
     public void showPopUpAction_CustomizePopupWindowParams(object sender, CustomizePopupWindowParamsEventArgs e)
     {
-        var type = OCPPChargeTag.AssignableType;
-        if (type == null || ObjectSpace == null)
+        var type = OCPPChargePoint.AssignableType;
+        if (type == null)
         {
             return;
         }
-        var unknown = View.CurrentObject as UnknownOCPPChargeTag;
+
+        var unknown = View.CurrentObject as UnknownOCPPChargePoint;
         if(unknown == null || string.IsNullOrEmpty(unknown.Identifier))
         {
             return;
@@ -34,22 +35,21 @@ public class UnknownOCPPChargeTagViewController : ObjectViewController<ObjectVie
 
         var identifier = unknown.Identifier;
 
-        var existingChargeTag = (OCPPChargeTag)ObjectSpace.FindObject(type, CriteriaOperator.Parse("Identifier = ?", identifier));
+        var existingChargePoint = (OCPPChargePoint)ObjectSpace.FindObject(type, CriteriaOperator.Parse("Identifier = ?", identifier));
 
-        if (existingChargeTag == null)
+        if (existingChargePoint == null)
         {
-            existingChargeTag = (OCPPChargeTag)ObjectSpace.CreateObject(type);
-            existingChargeTag.Identifier = identifier;
-            existingChargeTag.Name = identifier;
-            existingChargeTag.Blocked = true;
+            existingChargePoint = (OCPPChargePoint)ObjectSpace.CreateObject(type);
+            existingChargePoint.Identifier = identifier;
+            existingChargePoint.Name = identifier;
         }
 
         ObjectSpace.Delete(unknown);
         ObjectSpace.CommitChanges();
         ObjectSpace.Refresh();
 
-        var newObjectSpace = Application.CreateObjectSpace<OCPPChargeTag>();
-        var chargeTag = newObjectSpace.FindObject(typeof(OCPPChargeTag), CriteriaOperator.Parse("Identifier = ?", identifier));
+        var newObjectSpace = Application.CreateObjectSpace<OCPPChargePoint>();
+        var chargeTag = newObjectSpace.FindObject(typeof(OCPPChargePoint), CriteriaOperator.Parse("Identifier = ?", identifier));
         DetailView detailView = Application.CreateDetailView(newObjectSpace, chargeTag);
         detailView.ViewEditMode = DevExpress.ExpressApp.Editors.ViewEditMode.Edit;
         e.View = detailView;
