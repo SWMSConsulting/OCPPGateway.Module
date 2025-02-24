@@ -21,6 +21,11 @@ public class UnknownOCPPChargePointViewController : ObjectViewController<ObjectV
     }
     public void showPopUpAction_CustomizePopupWindowParams(object sender, CustomizePopupWindowParamsEventArgs e)
     {
+        if(OCPPChargePoint.AssignableTypes.Count() > 1)
+        {
+            throw new UserFriendlyException("There are multiple classes implementing OCPPChargePoint. You need to manually add the charge point.");
+        }
+
         var type = OCPPChargePoint.AssignableType;
         if (type == null)
         {

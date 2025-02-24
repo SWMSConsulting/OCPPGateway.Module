@@ -28,21 +28,21 @@ public abstract class OCPPChargeTag : BaseObject
     [Browsable(false)]
     public abstract IChargeTagGroup? ChargeTagGroup { get; }
 
-
     #region OCPP related
-
     [Browsable(false)]
-    public static Type? AssignableType
+    public static IEnumerable<Type> AssignableTypes
     {
         get
         {
             var type = typeof(OCPPChargeTag);
             return AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(s => s.GetTypes())
-                .Where(t => t != type && type.IsAssignableFrom(t))
-                .FirstOrDefault();
+                .Where(t => t != type && type.IsAssignableFrom(t));
         }
     }
+
+    [Browsable(false)]
+    public static Type? AssignableType => AssignableTypes.FirstOrDefault();
 
     [Browsable(false)]
     public ChargeTag ChargeTag

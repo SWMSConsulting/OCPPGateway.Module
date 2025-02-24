@@ -21,6 +21,11 @@ public class UnknownOCPPChargeTagViewController : ObjectViewController<ObjectVie
     }
     public void showPopUpAction_CustomizePopupWindowParams(object sender, CustomizePopupWindowParamsEventArgs e)
     {
+        if (OCPPChargeTag.AssignableTypes.Count() > 1)
+        {
+            throw new UserFriendlyException("There are multiple classes implementing OCPPChargeTag. You need to manually add the charge tag.");
+        }
+
         var type = OCPPChargeTag.AssignableType;
         if (type == null || ObjectSpace == null)
         {

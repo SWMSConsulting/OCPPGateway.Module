@@ -49,19 +49,20 @@ public abstract class OCPPChargePoint : AssetAdministrationShell
 
 
     #region OCPP related
-
     [Browsable(false)]
-    public static Type? AssignableType
+    public static IEnumerable<Type> AssignableTypes
     {
         get
         {
             var type = typeof(OCPPChargePoint);
             return AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(s => s.GetTypes())
-                .Where(t => t != type && type.IsAssignableFrom(t))
-                .FirstOrDefault();
+                .Where(t => t != type && type.IsAssignableFrom(t));
         }
     }
+
+    [Browsable(false)]
+    public static Type? AssignableType => AssignableTypes.FirstOrDefault();
 
     [Browsable(false)]
     public ChargePoint ChargePoint
