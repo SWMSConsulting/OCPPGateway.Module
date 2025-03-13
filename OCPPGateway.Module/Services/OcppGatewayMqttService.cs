@@ -464,6 +464,12 @@ public OcppGatewayMqttService(
         var topic = MqttTopicService.GetDataTopic("DataTransfer", chargePointId, false);
         await PublishStringAsync(topic, payload, false, correlationData);
     }
+    public async Task Publish(DataTransferResponse dataTransferResponse, string chargePointId, string correlationData)
+    {
+        var payload = Serialize(dataTransferResponse);
+        var topic = MqttTopicService.GetDataTopic("DataTransfer", chargePointId, false);
+        await PublishStringAsync(topic, payload, false, correlationData);
+    }
     public async Task Publish(ChargePoint chargePoint, string correlationData)
     {
         var payload = Serialize(chargePoint);
