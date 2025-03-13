@@ -391,7 +391,7 @@ public OcppGatewayMqttService(
 
             if(chargePoints != null)
             {
-                await Publish(chargePoints, correlationData);
+                await Publish(chargePoints, identifier, correlationData);
                 return;
             }
         }
@@ -422,7 +422,29 @@ public OcppGatewayMqttService(
 
             if (chargeTags != null)
             {
-                await Publish(chargeTags, correlationData);
+                await Publish(chargeTags, identifier, correlationData);
+                return;
+            }
+        }
+
+        if (identifier == "blocked")
+        {
+            var chargeTags = objectSpace.GetObjects<OCPPChargeTag>().Where(t => t.Blocked).Select(t => t.ChargeTag).ToList();
+
+            if (chargeTags != null)
+            {
+                await Publish(chargeTags, identifier, correlationData);
+                return;
+            }
+        }
+
+        if (identifier == "master")
+        {
+            var chargeTags = objectSpace.GetObjects<OCPPChargeTag>().Where(t => t.ChargeTagGroup?.Identifier == identifier).Select(t => t.ChargeTag).ToList();
+
+            if (chargeTags != null)
+            {
+                await Publish(chargeTags, identifier, correlationData);
                 return;
             }
         }
@@ -470,10 +492,10 @@ public OcppGatewayMqttService(
         var topic = MqttTopicService.GetDataTopic(nameof(ChargePoint), chargePoint.ChargePointId, false);
         await PublishStringAsync(topic, payload, false, correlationData);
     }
-    public async Task Publish(List<ChargePoint> chargePoints, string correlationData)
+    public async Task Publish(List<ChargePoint> chargePoints, string groupIdentifier, string correlationData)
     {
         var payload = Serialize(chargePoints);
-        var topic = MqttTopicService.GetDataTopic(nameof(ChargePoint), "all", false);
+        var topic = MqttTopicService.GetDataTopic(nameof(ChargePoint), groupIdentifier, false);
         await PublishStringAsync(topic, payload, false, correlationData);
     }
 
@@ -483,10 +505,10 @@ public OcppGatewayMqttService(
         var topic = MqttTopicService.GetDataTopic(nameof(ChargeTag), chargeTag.TagId, false);
         await PublishStringAsync(topic, payload, false, correlationData);
     }
-    public async Task Publish(List<ChargeTag> chargeTags, string correlationData)
+    public async Task Publish(List<ChargeTag> chargeTags, string groupIdentifier, string correlationData)
     {
         var payload = Serialize(chargeTags);
-        var topic = MqttTopicService.GetDataTopic(nameof(ChargeTag), "all", false);
+        var topic = MqttTopicService.GetDataTopic(nameof(ChargeTag), groupIdentifier, false);
         await PublishStringAsync(topic, payload, false, correlationData);
     }
 
