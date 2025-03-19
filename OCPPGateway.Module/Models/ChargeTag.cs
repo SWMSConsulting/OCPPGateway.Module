@@ -23,10 +23,18 @@ public partial class ChargeTag
 
     public static string ToHexString(long tagId, bool reverseEndians)
     {
+        var hexTag = tagId.ToString("X");
         if (reverseEndians)
-            return BinaryPrimitives.ReverseEndianness((uint)tagId).ToString("X");
-        else
-            return tagId.ToString("X");
+        {
+            hexTag = BinaryPrimitives.ReverseEndianness((uint)tagId).ToString("X");
+        }
+
+        if (hexTag.Length % 2 != 0)
+        {
+            hexTag = "0" + hexTag;
+        }
+
+        return hexTag;
     }
 
     public static long? FromHexString(string tagId, bool reverseEndians)
