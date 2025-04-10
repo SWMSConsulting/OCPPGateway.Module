@@ -43,12 +43,6 @@ public abstract class OCPPChargePoint : AssetAdministrationShell
     [NotMapped]
     public int NumberOfConnectors => Connectors.Count;
 
-    [NotMapped]
-    [LastDatapoint("is_online", "heartbeat")]
-    [Appearance("LastHeartbeatDisabled", Enabled = false)]
-    [ModelDefault("DisplayFormat", "{0:dd.MM.yyyy HH:mm:ss}")]
-    public DateTime? LastHeartbeat { get; set; }
-
 
     #region OCPP related
     [Browsable(false)]
