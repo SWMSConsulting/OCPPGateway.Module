@@ -1,9 +1,7 @@
 ﻿using DevExpress.Persistent.Base;
 using DevExpress.Persistent.BaseImpl.EF;
 using DevExpress.Persistent.Validation;
-using MQTTnet.Internal;
 using OCPPGateway.Module.Models;
-using OCPPGateway.Module.Services;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
@@ -11,6 +9,7 @@ namespace OCPPGateway.Module.BusinessObjects;
 
 [NavigationItem("OCPP")]
 [DisplayName("Charge Tag")]
+[Microsoft.EntityFrameworkCore.Index(nameof(Identifier), IsUnique = false)]
 public abstract class OCPPChargeTag : BaseObject
 {
     [RuleRequiredField]

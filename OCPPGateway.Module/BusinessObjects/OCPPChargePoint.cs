@@ -1,13 +1,9 @@
 ﻿using DevExpress.ExpressApp.ConditionalAppearance;
 using DevExpress.ExpressApp.DC;
-using DevExpress.ExpressApp.Model;
 using DevExpress.Persistent.Base;
 using DevExpress.Persistent.Validation;
-using MQTTnet.Internal;
 using OCPPGateway.Module.BusinessObjects.Events;
 using OCPPGateway.Module.Models;
-using OCPPGateway.Module.Services;
-using SWMS.Influx.Module.Attributes;
 using SWMS.Influx.Module.BusinessObjects;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -18,6 +14,7 @@ namespace OCPPGateway.Module.BusinessObjects;
 
 [NavigationItem("OCPP")]
 [DisplayName("Charge Point")]
+[Microsoft.EntityFrameworkCore.Index(nameof(Identifier), IsUnique = false)]
 public abstract class OCPPChargePoint : AssetAdministrationShell
 {
     public override bool UpdatePropertiesOnLoaded => false;

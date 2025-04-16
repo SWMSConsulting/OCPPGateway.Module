@@ -44,7 +44,7 @@ public abstract class OCPPChargePointConnector: AssetAdministrationShell
     public virtual IList<OCPPTransaction> Transactions { get; set; } = new ObservableCollection<OCPPTransaction>();
 
     [NotMapped]
-    public OCPPTransaction? ActiveTransaction => Transactions.OrderByDescending(t => t.StartTime).FirstOrDefault(t => !t.IsStopped);
+    public OCPPTransaction? ActiveTransaction => Transactions.Where(t => t.StopTime == null).OrderByDescending(t => t.StartTime).FirstOrDefault();
 
     [NotMapped]
     public bool IsInUse => ActiveTransaction != null;

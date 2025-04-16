@@ -5,11 +5,11 @@ using DevExpress.Persistent.BaseImpl.EF;
 using OCPPGateway.Module.Models;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Runtime.Serialization;
 
 namespace OCPPGateway.Module.BusinessObjects;
 
 [NavigationItem("OCPP")]
+[Microsoft.EntityFrameworkCore.Index(nameof(TransactionId), IsUnique = false)]
 public abstract class OCPPTransaction: BaseObject
 {
     public virtual int TransactionId { get; set; }
