@@ -19,6 +19,8 @@ public abstract class OCPPTransaction: BaseObject
 
     [ModelDefault("DisplayFormat", "{0:G}")]
     public virtual DateTime StartTime { get; set; }
+
+    [ModelDefault("DisplayFormat", "{0:n1}")]
     public virtual double StartMeter { get; set; }
     // public string StartResult { get; set; }
 
@@ -26,6 +28,8 @@ public abstract class OCPPTransaction: BaseObject
 
     [ModelDefault("DisplayFormat", "{0:G}")]
     public virtual DateTime? StopTime { get; set; }
+
+    [ModelDefault("DisplayFormat", "{0:n1}")]
     public virtual double? StopMeter { get; set; }
     public virtual string StopReason { get; set; }
 
@@ -46,6 +50,7 @@ public abstract class OCPPTransaction: BaseObject
     public TimeSpan? Duration => StopTime.HasValue ? StopTime.Value - StartTime : null;
 
     [NotMapped]
+    [ModelDefault("DisplayFormat", "{0:n1}")]
     public double? Consumption => StopMeter.HasValue ? StopMeter - StartMeter : null;
 
     [Browsable(false)]
