@@ -42,7 +42,7 @@ public partial class ChargeTag
         if (string.IsNullOrEmpty(tagId))
             return null;
 
-        if (tagId.Count() == 10 && long.TryParse(tagId, out long result))
+        if (tagId.Count() > 8 && long.TryParse(tagId, out long result))
         {
             return result;
         }
