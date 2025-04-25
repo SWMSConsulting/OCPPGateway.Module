@@ -134,7 +134,7 @@ public OcppGatewayMqttService(
     public async Task RemoteStopTransaction(OCPPChargePointConnector connector)
     {
         var transaction = connector.ActiveTransaction;
-        if (transaction == null || transaction.IsStopped)
+        if (transaction == null || transaction.StopTime.HasValue)
         {
             return;
         }
@@ -285,7 +285,7 @@ public OcppGatewayMqttService(
         {
             List<Transaction> openTransactions = chargePoint.Connectors
                 .SelectMany(c => c.Transactions)
-                .Where(t => !t.IsStopped)
+                .Where(t => !t.StopTime.HasValue)
                 .Select(c => c.ToTransaction())
                 .ToList() ?? [];
             if(transaction.ConnectorId > 0)
@@ -304,7 +304,7 @@ public OcppGatewayMqttService(
             return;
         }
 
-        var unstoppedTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId != transaction.TransactionId && !t.IsStopped && t.StartTime < transaction.StartTime);
+        var unstoppedTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId != transaction.TransactionId && !t.StopTime.HasValue && t.StartTime < transaction.StartTime);
         if (unstoppedTransaction != null)
         {
             unstoppedTransaction.StopMeter = transaction.MeterStart;
@@ -313,7 +313,7 @@ public OcppGatewayMqttService(
             unstoppedTransaction.StopReason = "Another transaction started";
         }
 
-        var existingTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId == transaction.TransactionId && !t.IsStopped);
+        var existingTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId == transaction.TransactionId && !t.StopTime.HasValue);
         if (existingTransaction == null)
         {
             existingTransaction = (OCPPTransaction)objectSpace.CreateObject(type);

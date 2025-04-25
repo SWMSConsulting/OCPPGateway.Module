@@ -33,10 +33,6 @@ public abstract class OCPPTransaction: BaseObject
     public virtual double? StopMeter { get; set; }
     public virtual string StopReason { get; set; }
 
-
-    [NotMapped]
-    public bool IsStopped => StopTime.HasValue;
-
     [NotMapped]
     [Browsable(false)]
     public OCPPChargeTag? StartTag => ObjectSpace?.FindObject<OCPPChargeTag>(CriteriaOperator.Parse("Identifier == ?", StartTagId));
