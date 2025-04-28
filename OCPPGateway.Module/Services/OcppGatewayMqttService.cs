@@ -154,7 +154,7 @@ public OcppGatewayMqttService(
     #endregion
 
     #region OnDataFromGatewayReceived
-    public async void OnDataFromGatewayReceived(MessageReceivedEventArgs args)
+    public async Task OnDataFromGatewayReceived(MessageReceivedEventArgs args)
     {
         DataFromGatewayReceived?.Invoke(this, args);
 
@@ -586,7 +586,7 @@ public OcppGatewayMqttService(
 
         if (MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeDataFromChargePoint))
         {
-            OnDataFromGatewayReceived(args);
+            OnDataFromGatewayReceived(args).RunInBackground();
         }
 
         if (MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeDataToChargePoint))
