@@ -33,10 +33,6 @@ public abstract class OCPPChargePoint : AssetAdministrationShell
     [Aggregated]
     public virtual IList<OCPPChargePointConnector> Connectors { get; set; } = new ObservableCollection<OCPPChargePointConnector>();
 
-    [Aggregated]
-    [Appearance("EventsDisabled", Enabled = false)]
-    public virtual IList<OCPPEvent> Events { get; set; } = new ObservableCollection<OCPPEvent>();
-
     [NotMapped]
     public int NumberOfConnectors => Connectors.Count;
 
