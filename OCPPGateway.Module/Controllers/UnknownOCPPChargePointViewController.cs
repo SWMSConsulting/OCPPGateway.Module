@@ -1,10 +1,7 @@
 ﻿using DevExpress.Data.Filtering;
 using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.Actions;
-using DevExpress.Persistent.Base;
-using InfluxDB.Client.Api.Domain;
 using OCPPGateway.Module.BusinessObjects;
-using System;
 
 namespace OCPPGateway.Module.Controllers;
 
@@ -12,12 +9,15 @@ public class UnknownOCPPChargePointViewController : ObjectViewController<ObjectV
 {
     public UnknownOCPPChargePointViewController()
     {
-        PopupWindowShowAction showPopUpAction = new PopupWindowShowAction(this, "Add to Charge Points", "View")
+        if (OCPPChargePoint.AssignableTypes.Count() == 1)
         {
-            ImageName = "Actions_Add",
-            SelectionDependencyType = SelectionDependencyType.RequireSingleObject
-        };
-        showPopUpAction.CustomizePopupWindowParams += showPopUpAction_CustomizePopupWindowParams;        
+            PopupWindowShowAction showPopUpAction = new PopupWindowShowAction(this, "Add to Charge Points", "View")
+            {
+                ImageName = "Actions_Add",
+                SelectionDependencyType = SelectionDependencyType.RequireSingleObject
+            };
+            showPopUpAction.CustomizePopupWindowParams += showPopUpAction_CustomizePopupWindowParams;
+        }
     }
     public void showPopUpAction_CustomizePopupWindowParams(object sender, CustomizePopupWindowParamsEventArgs e)
     {
