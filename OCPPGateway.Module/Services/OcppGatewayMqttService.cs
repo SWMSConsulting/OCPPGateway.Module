@@ -471,6 +471,13 @@ public class OcppGatewayMqttService
     #endregion
 
     #region publish
+    public async Task Publish(ChargingConfiguration configuration, string chargePointId, string correlationData = "")
+    {
+        var payload = Serialize(configuration);
+        var topic = MqttTopicService.GetDataTopic("ChargingConfiguration", chargePointId, false);
+        await PublishStringAsync(topic, payload, false, correlationData);
+    }
+
     public async Task Publish(SendLocalListRequest request, string chargePointId)
     {
         var payload = Serialize(request);
