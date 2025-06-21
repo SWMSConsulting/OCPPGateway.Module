@@ -16,5 +16,7 @@ public partial class ConnectorStatus
     public double? LastConsumption { get; set; }
 
     public double? StateOfCharge { get; set; }
+
+    public ChargingPreset? ChargingPreset { get; set; }
 }
 
