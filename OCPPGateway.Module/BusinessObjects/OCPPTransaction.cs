@@ -5,11 +5,11 @@ using DevExpress.Persistent.BaseImpl.EF;
 using OCPPGateway.Module.Models;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Runtime.Serialization;
 
 namespace OCPPGateway.Module.BusinessObjects;
 
 [NavigationItem("OCPP")]
+[Microsoft.EntityFrameworkCore.Index(nameof(TransactionId), IsUnique = false)]
 public abstract class OCPPTransaction: BaseObject
 {
     public virtual int TransactionId { get; set; }
@@ -19,6 +19,8 @@ public abstract class OCPPTransaction: BaseObject
 
     [ModelDefault("DisplayFormat", "{0:G}")]
     public virtual DateTime StartTime { get; set; }
+
+    [ModelDefault("DisplayFormat", "{0:n1}")]
     public virtual double StartMeter { get; set; }
     // public string StartResult { get; set; }
 
@@ -26,12 +28,10 @@ public abstract class OCPPTransaction: BaseObject
 
     [ModelDefault("DisplayFormat", "{0:G}")]
     public virtual DateTime? StopTime { get; set; }
+
+    [ModelDefault("DisplayFormat", "{0:n1}")]
     public virtual double? StopMeter { get; set; }
     public virtual string StopReason { get; set; }
-
-
-    [NotMapped]
-    public bool IsStopped => StopTime.HasValue;
 
     [NotMapped]
     [Browsable(false)]
@@ -46,6 +46,7 @@ public abstract class OCPPTransaction: BaseObject
     public TimeSpan? Duration => StopTime.HasValue ? StopTime.Value - StartTime : null;
 
     [NotMapped]
+    [ModelDefault("DisplayFormat", "{0:n1}")]
     public double? Consumption => StopMeter.HasValue ? StopMeter - StartMeter : null;
 
     [Browsable(false)]

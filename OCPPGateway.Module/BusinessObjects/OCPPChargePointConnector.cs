@@ -35,7 +35,11 @@ public abstract class OCPPChargePointConnector: AssetAdministrationShell
     public virtual string Name { get; set; } = "";
 
     public virtual string? LastStatus { get; set; }
+
+    [ModelDefault("DisplayFormat", "{0:n1}")]
     public virtual double? LastConsumption { get; set; }
+
+    [ModelDefault("DisplayFormat", "{0:n1}")]
     public virtual double? LastMeter { get; set; }
 
     [ModelDefault("DisplayFormat", "{0:P0}")]
@@ -44,13 +48,10 @@ public abstract class OCPPChargePointConnector: AssetAdministrationShell
     public virtual IList<OCPPTransaction> Transactions { get; set; } = new ObservableCollection<OCPPTransaction>();
 
     [NotMapped]
-    public OCPPTransaction? ActiveTransaction => Transactions.OrderByDescending(t => t.StartTime).FirstOrDefault(t => !t.IsStopped);
+    public OCPPTransaction? ActiveTransaction => Transactions.Where(t => t.StopTime == null).OrderByDescending(t => t.StartTime).FirstOrDefault();
 
     [NotMapped]
     public bool IsInUse => ActiveTransaction != null;
-
-    [NotMapped]
-    public bool IsOffline => LastStatus == "Undefined";
 
     [NotMapped]
     public string? ConnectedRfid => ActiveTransaction?.StartTag?.Identifier;

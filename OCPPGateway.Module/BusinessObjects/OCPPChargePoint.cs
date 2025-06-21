@@ -1,13 +1,9 @@
 ﻿using DevExpress.ExpressApp.ConditionalAppearance;
 using DevExpress.ExpressApp.DC;
-using DevExpress.ExpressApp.Model;
 using DevExpress.Persistent.Base;
 using DevExpress.Persistent.Validation;
-using MQTTnet.Internal;
 using OCPPGateway.Module.BusinessObjects.Events;
 using OCPPGateway.Module.Models;
-using OCPPGateway.Module.Services;
-using SWMS.Influx.Module.Attributes;
 using SWMS.Influx.Module.BusinessObjects;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -18,8 +14,11 @@ namespace OCPPGateway.Module.BusinessObjects;
 
 [NavigationItem("OCPP")]
 [DisplayName("Charge Point")]
+[Microsoft.EntityFrameworkCore.Index(nameof(Identifier), IsUnique = false)]
 public abstract class OCPPChargePoint : AssetAdministrationShell
 {
+    public override bool UpdatePropertiesOnLoaded => false;
+
     public abstract OCPPProtocolVersion OCPPProtocolVersion { get; }
 
     public override string Caption => Name;
@@ -34,34 +33,25 @@ public abstract class OCPPChargePoint : AssetAdministrationShell
     [Aggregated]
     public virtual IList<OCPPChargePointConnector> Connectors { get; set; } = new ObservableCollection<OCPPChargePointConnector>();
 
-    [Aggregated]
-    [Appearance("EventsDisabled", Enabled = false)]
-    public virtual IList<OCPPEvent> Events { get; set; } = new ObservableCollection<OCPPEvent>();
-
     [NotMapped]
     public int NumberOfConnectors => Connectors.Count;
 
-    [NotMapped]
-    [LastDatapoint("is_online", "heartbeat")]
-    [Appearance("LastHeartbeatDisabled", Enabled = false)]
-    [ModelDefault("DisplayFormat", "{0:dd.MM.yyyy HH:mm:ss}")]
-    public DateTime? LastHeartbeat { get; set; }
-
 
     #region OCPP related
-
     [Browsable(false)]
-    public static Type? AssignableType
+    public static IEnumerable<Type> AssignableTypes
     {
         get
         {
             var type = typeof(OCPPChargePoint);
             return AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(s => s.GetTypes())
-                .Where(t => t != type && type.IsAssignableFrom(t))
-                .FirstOrDefault();
+                .Where(t => t != type && type.IsAssignableFrom(t));
         }
     }
+
+    [Browsable(false)]
+    public static Type? AssignableType => AssignableTypes.FirstOrDefault();
 
     [Browsable(false)]
     public ChargePoint ChargePoint
