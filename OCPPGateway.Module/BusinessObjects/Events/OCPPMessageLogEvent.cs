@@ -19,6 +19,6 @@ public class OCPPMessageLogEvent : OCPPEvent
     #region OCPPEvent
     public override string Category => "OCPPMessageLog";
 
-    public override string Description => $"Received {MessageAction} message of type {MessageType} for {ChargePoint?.Identifier}";
+    public override string Description => $"Received {MessageAction} message of type {MessageType} for {ChargePointIdentifier}";
     #endregion
 }
