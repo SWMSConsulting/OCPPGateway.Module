@@ -34,6 +34,14 @@ public partial class ChargeTag
             hexTag = "0" + hexTag;
         }
 
+        if(int.TryParse(Environment.GetEnvironmentVariable("MIN_LENGTH_CARD_HEX"), out var minLengthCardHex))
+        {
+            while(hexTag.Length < minLengthCardHex)
+            {
+                hexTag = "0" + hexTag;
+            }
+        }
+
         return hexTag;
     }
 
