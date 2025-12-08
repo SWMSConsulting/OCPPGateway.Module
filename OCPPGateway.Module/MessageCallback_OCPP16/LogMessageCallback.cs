@@ -20,23 +20,14 @@ public class LogMessageCallback : IMessageCallbackOCPP16
             return;
         }
 
-        var chargePoint = objectSpace.FindObject<OCPPChargePoint>(CriteriaOperator.Parse($"Identifier = '{eventArgs.Identifier}'"));
-        if (chargePoint == null)
-        {
-            logger.LogInformation($"ChargePoint with identifier {eventArgs.Identifier} not found");
-            return;
-        }
-
         var logEvent = objectSpace.CreateObject<OCPPMessageLogEvent>();
         logEvent.Timestamp = DateTime.Now;
-        logEvent.ChargePoint = chargePoint;
+        logEvent.ChargePointIdentifier = eventArgs.Identifier;
         logEvent.Protocol = OCPPVersion.OCPP16.ToString();
         logEvent.MessageType = message.MessageType;
         logEvent.MessageAction = eventArgs.Action;
         logEvent.MessageId = message.UniqueId;
         logEvent.MessagePayload = eventArgs.Payload;
-
-        chargePoint.Events.Add(logEvent);
 
         objectSpace.CommitChanges();
     }

@@ -67,11 +67,12 @@ public class OcppGatewayMqttService
 
     public static JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings
     {
-        NullValueHandling = NullValueHandling.Ignore
+        NullValueHandling = NullValueHandling.Ignore,
+        DateTimeZoneHandling = DateTimeZoneHandling.Utc,
     };
 
-#region setup
-public OcppGatewayMqttService(
+    #region setup
+    public OcppGatewayMqttService(
         ILogger<OcppGatewayMqttService> logger,
         IServiceScopeFactory serviceScopeFactory
     )
@@ -134,7 +135,7 @@ public OcppGatewayMqttService(
     public async Task RemoteStopTransaction(OCPPChargePointConnector connector)
     {
         var transaction = connector.ActiveTransaction;
-        if (transaction == null || transaction.IsStopped)
+        if (transaction == null || transaction.StopTime.HasValue)
         {
             return;
         }
@@ -154,7 +155,7 @@ public OcppGatewayMqttService(
     #endregion
 
     #region OnDataFromGatewayReceived
-    public async void OnDataFromGatewayReceived(MessageReceivedEventArgs args)
+    public async Task OnDataFromGatewayReceived(MessageReceivedEventArgs args)
     {
         DataFromGatewayReceived?.Invoke(this, args);
 
@@ -203,7 +204,7 @@ public OcppGatewayMqttService(
 
     public void HandleUnknownChargePoint(string payload)
     {
-        var chargePoint = JsonConvert.DeserializeObject<UnknownChargePoint>(payload);
+        var chargePoint = JsonConvert.DeserializeObject<UnknownChargePoint>(payload, JsonSerializerSettings);
         if(chargePoint == null)
         {
             _logger.LogError("Failed to deserialize UnknownChargePoint");
@@ -228,7 +229,7 @@ public OcppGatewayMqttService(
 
     public void HandleUnknownChargeTag(string payload)
     {
-        var chargeTag = JsonConvert.DeserializeObject<UnknownChargeTag>(payload);
+        var chargeTag = JsonConvert.DeserializeObject<UnknownChargeTag>(payload, JsonSerializerSettings);
         if (chargeTag == null)
         {
             _logger.LogError("Failed to deserialize UnknownChargeTag");
@@ -254,12 +255,14 @@ public OcppGatewayMqttService(
 
     public async Task HandleTransaction(string payload, string correlationData)
     {
-        var transaction = JsonConvert.DeserializeObject<Transaction>(payload);
+        var transaction = JsonConvert.DeserializeObject<Transaction>(payload, JsonSerializerSettings);
         if (transaction == null)
         {
             _logger.LogError("Failed to deserialize Transaction");
             return;
         }
+        transaction.StartTime = transaction.StartTime.ToLocalTime();
+        transaction.StopTime = transaction.StopTime?.ToLocalTime();
 
         using var scope = _serviceScopeFactory.CreateScope();
         var type = OCPPTransaction.AssignableType;
@@ -285,7 +288,7 @@ public OcppGatewayMqttService(
         {
             List<Transaction> openTransactions = chargePoint.Connectors
                 .SelectMany(c => c.Transactions)
-                .Where(t => !t.IsStopped)
+                .Where(t => !t.StopTime.HasValue)
                 .Select(c => c.ToTransaction())
                 .ToList() ?? [];
             if(transaction.ConnectorId > 0)
@@ -304,7 +307,7 @@ public OcppGatewayMqttService(
             return;
         }
 
-        var unstoppedTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId != transaction.TransactionId && !t.IsStopped && t.StartTime < transaction.StartTime);
+        var unstoppedTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId != transaction.TransactionId && !t.StopTime.HasValue && t.StartTime < transaction.StartTime);
         if (unstoppedTransaction != null)
         {
             unstoppedTransaction.StopMeter = transaction.MeterStart;
@@ -313,7 +316,7 @@ public OcppGatewayMqttService(
             unstoppedTransaction.StopReason = "Another transaction started";
         }
 
-        var existingTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId == transaction.TransactionId && !t.IsStopped);
+        var existingTransaction = connector.Transactions.FirstOrDefault(t => t.TransactionId == transaction.TransactionId && !t.StopTime.HasValue);
         if (existingTransaction == null)
         {
             existingTransaction = (OCPPTransaction)objectSpace.CreateObject(type);
@@ -337,7 +340,7 @@ public OcppGatewayMqttService(
 
     public void HandleConnectorStatus(string payload)
     {
-        var status = JsonConvert.DeserializeObject<ConnectorStatus>(payload);
+        var status = JsonConvert.DeserializeObject<ConnectorStatus>(payload, JsonSerializerSettings);
         if (status == null)
         {
             _logger.LogError("Failed to deserialize ConnectorStatus");
@@ -468,6 +471,13 @@ public OcppGatewayMqttService(
     #endregion
 
     #region publish
+    public async Task Publish(ChargingConfiguration configuration, string chargePointId, string correlationData = "")
+    {
+        var payload = Serialize(configuration);
+        var topic = MqttTopicService.GetDataTopic("ChargingConfiguration", chargePointId, false);
+        await PublishStringAsync(topic, payload, false, correlationData);
+    }
+
     public async Task Publish(SendLocalListRequest request, string chargePointId)
     {
         var payload = Serialize(request);
@@ -586,7 +596,7 @@ public OcppGatewayMqttService(
 
         if (MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeDataFromChargePoint))
         {
-            OnDataFromGatewayReceived(args);
+            OnDataFromGatewayReceived(args).RunInBackground();
         }
 
         if (MatchesWildcard(arg.ApplicationMessage.Topic, TopicSubscribeDataToChargePoint))

@@ -29,7 +29,7 @@ public partial class ChargeTag
             hexTag = BinaryPrimitives.ReverseEndianness((uint)tagId).ToString("X");
         }
 
-        if (hexTag.Length % 2 != 0)
+        while (hexTag.Length < 8)
         {
             hexTag = "0" + hexTag;
         }
@@ -50,7 +50,7 @@ public partial class ChargeTag
         if (string.IsNullOrEmpty(tagId))
             return null;
 
-        if (tagId.Count() == 10 && long.TryParse(tagId, out long result))
+        if (tagId.Count() > 8 && long.TryParse(tagId, out long result))
         {
             return result;
         }
