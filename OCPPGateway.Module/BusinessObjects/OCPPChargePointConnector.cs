@@ -34,14 +34,18 @@ public abstract class OCPPChargePointConnector: AssetAdministrationShell
     [RuleRequiredField]
     public virtual string Name { get; set; } = "";
 
+    [UseInAuditTrail(false)]
     public virtual string? LastStatus { get; set; }
 
+    [UseInAuditTrail(false)]
     [ModelDefault("DisplayFormat", "{0:n1}")]
     public virtual double? LastConsumption { get; set; }
 
+    [UseInAuditTrail(false)]
     [ModelDefault("DisplayFormat", "{0:n1}")]
     public virtual double? LastMeter { get; set; }
 
+    [UseInAuditTrail(false)]
     [ModelDefault("DisplayFormat", "{0:P0}")]
     public virtual double? LastStateOfCharge { get; set; }
 
