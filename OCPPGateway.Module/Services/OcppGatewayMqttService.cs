@@ -247,6 +247,7 @@ public class OcppGatewayMqttService
                 existing = objectSpace.CreateObject<UnknownOCPPChargeTag>();
                 existing.Identifier = chargeTag.TagId;
             }
+            existing.ChargePointIdentifier = chargeTag.ChargePointIdentifier ?? "";
             existing.Timestamp = DateTime.Now;
 
             objectSpace.CommitChanges();

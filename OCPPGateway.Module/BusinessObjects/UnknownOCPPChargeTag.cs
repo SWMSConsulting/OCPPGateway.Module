@@ -11,6 +11,8 @@ public class UnknownOCPPChargeTag: BaseObject
 {
     public virtual string Identifier { get; set; }
 
+    public virtual string ChargePointIdentifier { get; set; }
+
 
     [ModelDefault("DisplayFormat", "{0:G}")]
     public virtual DateTime Timestamp { get; set; }
